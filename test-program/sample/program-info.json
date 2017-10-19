@@ -1,0 +1,12 @@
+{
+    "LANGUAGE" : "C",
+    "MAIN_FLAGS" : ["?DEBUG_FLAG", "?C99_STANDARD"],
+    "KERNEL_FLAGS" : ["-DFAST", "?C99_STANDARD"],
+    "LINK_FLAGS" : ["?C99_STANDARD"],
+    "LIB_LIST" : ["-lm"],
+    "MAIN_FILENAME" : "main.c",
+    "KERNEL_FILENAME" : "kernel.c",
+    "KERNEL_FUNCTION_NAME" : "kernel",
+    "INPUT" : [ "STDIN", "in.data" ],
+    "OUTPUT" : [ "STDOUT", "out.data" ]
+}

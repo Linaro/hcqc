@@ -1,0 +1,13 @@
+{
+    "DISTRIBUTION" : "OpenSUSE Tumbleweed",
+    "ARCH" : "aarch64",
+    "CPU" : "AMD Opteron A1100 Cortex A57",
+    "LANGUAGE" : "C",
+    "COMPILER" : "ClangLLVM",
+    "COMMAND" : "/usr/bin/clang",
+    "VERSION" : "4.0.1",
+    "OPT_FLAGS" : ["-O2"],
+    "ASM_FLAGS" : ["-S"],
+    "FLAG_DB" : [["?DEBUG_FLAG", "-g"],
+		 ["?C99_STANDARD", "-std=c99"]]
+}

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+HCQC_ROOT_DIR=${PWD}
+export PYTHONPATH=${HCQC_ROOT_DIR}/command:${PYTHONPATH}
+
+python3 ./command/hcqc.py "${HCQC_ROOT_DIR}/" $@

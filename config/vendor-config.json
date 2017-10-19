@@ -1,0 +1,13 @@
+{
+    "DISTRIBUTION" : "Linux",
+    "ARCH" : "aarch64",
+    "CPU" : "AMD Opteron A1100 Cortex A57",
+    "LANGUAGE" : "C",
+    "COMPILER" : "VendorC",
+    "COMMAND" : "/opt/vendor/bin/cc",
+    "VERSION" : "0.0.0",
+    "OPT_FLAGS" : ["-O3"],
+    "ASM_FLAGS" : ["-S"],
+    "FLAG_DB" : [["?DEBUG_FLAG", "-debug"],
+		 ["?C99_STANDARD", "-c99"]]
+}
