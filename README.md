@@ -8,14 +8,14 @@ Many HPC applications have a few hot spots which are a very narrow range of code
 These hot spots occupy most of the program execution time.
 Therefore, the quality of the code of the hot spot is important for performance.
 
-???
+    ???ADD MORE EXPLANATION HERE???
 
 HCQC is a tool to help improve the performance of hot spots.
 
 ## Quickstart Guide
 
 HCQC currently mainly deals with GCC or Clang/LLVM on Linux of 64 bit ARM architecture(AArch64).
-For other architectures, see [How to add new architectures](#HOWARCH).
+For other architectures or compilers, see [How to Add New Architectures or Compilers](#HOWARCH).
 
 In the following, `${INSTALL_DIRECTORY}` shows the directory where hcqc exists.
 
@@ -39,7 +39,7 @@ For example, if you want to investigate the optimization level `-O2` of the GCC 
                      ["?C99_STANDARD", "-std=c99"]]
     }
 
-Explanation of each field of the configuration file is described in [How to create new configuration files](#HOWCONFIG).
+Explanation of each field of the configuration file is described in [How to Create New Configuration Files](#HOWCONFIG).
 
 The name of the configuration file including this definition is `gcc-config.json` in the following.
 
@@ -89,7 +89,7 @@ All the result files generated using the test program `sample` are placed under 
 ### Viewing results
 
 The execution result of command `./command/hcqc` is data in JSON format.
-To make them easier to see, use the command `./command/hcqc-report`.
+To make them easier to see, you can use the command `./command/hcqc-report`.
 For example, the following command:
 
     % ./command/hcqc-report gcc-config sample R0 kind
@@ -137,7 +137,7 @@ the test program
 
     ${INSTALL_DIRECTORY}/hcqc/test-program/sample
 
-and the metric program name `kind`, he execution of HCQC is as follows：
+and the metric program name `kind`, the execution of HCQC is as follows:
 
     % cd ${INSTALL_DIRECTORY}/hcqc
     % ./command/hcqc CONFIG sample kind
@@ -162,21 +162,21 @@ The configuration file defines the compiler to be investigated and optimization 
         "OPT_FLAGS" : ["-O2"],
         "ASM_FLAGS" : ["-S", "-fverbose-asm"],
         "FLAG_DB" : [["?DEBUG_FLAG", "-g"],
-    		 ["?C99_STANDARD", "-std=c99"]]
+                     ["?C99_STANDARD", "-std=c99"]]
     }
     
 The meaning of each field of the configuration file is as follows:
 
-    "DISTRIBUTION" : distribution of OS(Currently unused)
-    "ARCH" : the machine hardware name(Must match `uname -m`)
-    "CPU" : the CPU name(Currently unused)
-    "LANGUAGE" : target programming language(Must match `LANGUAGE` of test programs)
-    "COMPILER" : the name of compiler
-    "COMMAND" : full path name of the compiler command
-    "VERSION" : the compiler version number(Must match `--version` result)
-    "OPT_FLAGS" : compiler options to be investigated
-    "ASM_FLAGS" : compiler options for generating assembly code
-    "FLAG_DB" : definition of flag variables used in program information file
+* `DISTRIBUTION` : distribution of OS(Currently unused)
+* `ARCH` : the machine hardware name(Must match `uname -m`)
+* `CPU` : the CPU name(Currently unused)
+* `LANGUAGE` : target programming language(Must match `LANGUAGE` of test programs)
+* `COMPILER` : the name of compiler
+* `COMMAND` : full path name of the compiler command
+* `VERSION` : the compiler version number(Must match `--version` result)
+* `OPT_FLAGS` : compiler options to be investigated
+* `ASM_FLAGS` : compiler options for generating assembly code
+* `FLAG_DB` : definition of flag variables used in program information file
 
 From the field information of `FLAG_DB`, HCQC creates a flag replacement map.
 For example, the definition of the field of FLAG_DB:
@@ -212,16 +212,16 @@ The contents are, for example, as follows:
 
 The meaning of each field is as follows:
 
-    "LANGUAGE" : programming language describing the test program
-    "MAIN_FLAGS" : compile options for compiling files in the main part
-    "KERNEL_FLAGS" : compile options for compiling files in the kernel part
-    "LINK_FLAGS" : link options for generating executable files
-    "LIB_LIST" : library specification options used to generate executable file
-    "MAIN_FILENAME" : the file name of the main part
-    "KERNEL_FILENAME" : the file name of the kernel part
-    "KERNEL_FUNCTION_NAME" : the name of kernel function
-    "INPUT" : specification of input data of executable file
-    "OUTPUT" : specification of output data of executable file
+* `LANGUAGE` : programming language describing the test program
+* `MAIN_FLAGS` : compile options for compiling files in the main part
+* `KERNEL_FLAGS` : compile options for compiling files in the kernel part
+* `LINK_FLAGS` : link options for generating executable files
+* `LIB_LIST` : library specification options used to generate executable file
+* `MAIN_FILENAME` : the file name of the main part
+* `KERNEL_FILENAME` : the file name of the kernel part
+* `KERNEL_FUNCTION_NAME` : the name of kernel function
+* `INPUT` : specification of input data for executable file
+* `OUTPUT` : specification of output data for executable file
 
 Using these pieces of information, HCQC compiles and executes the test program, and verifies the result.
 First, it compiles the main file and generates the object file.
@@ -243,7 +243,7 @@ Similarly, HCQC compiles the file of the kernel part with the following command:
     
 At this time, the command actually executed is, for example, as follows:
 
-    % /usr/bin/gcc ${INSTALL_DIRECTORY}/hcqc/test-program/sample/kernel.c
+    % /usr/bin/gcc ${INSTALL_DIRECTORY}/hcqc/test-program/sample/kernel.c \
       -DFAST -std=c99 -O2 -c -o ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/kernel.o
 
 HCQC executes the following command to create an executable file from generated object files:
@@ -252,8 +252,8 @@ HCQC executes the following command to create an executable file from generated 
 
 At this time, the command actually executed is, for example, as follows:
 
-    % /usr/bin/gcc -std=c99 ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/main.o
-      ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/kernel.o
+    % /usr/bin/gcc -std=c99 ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/main.o \
+      ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/kernel.o \
        -o ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/a.out -lm
 
 Next, HCQC executes the created executable file with the specified input data and verifies the result.
@@ -266,14 +266,14 @@ In the sample program information file, the specification of the output data is 
 
     "OUTPUT" : [ "STDOUT", "out.data" ]
     
-This means that HCQC verifies the execution result by comparing the result of the standard output with the content of the file out.data.
+This means that HCQC verifies the execution result by comparing the result of the standard output with the content of the file `out.data`.
 At this time, the command actually executed is, for example, as follows:
 
-     % ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/a.out
-       < in.data
+     % ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/a.out \
+       < in.data \
        > ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/out.data
-     % /usr/bin/diff 
-       ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/out.data
+     % /usr/bin/diff  \
+       ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/out.data \
        ${INSTALL_DIRECTORY}/hcqc/test-program/sample/out.data
        
 After confirming that the execution result is correct, HCQC executes the metric program and obtain data about the test program.
@@ -284,8 +284,8 @@ To do this, HCQC executes the next command which changed part of the command to 
 
 At this time, the command actually executed is, for example, as follows:
 
-    % /usr/bin/gcc ${INSTALL_DIRECTORY}/hcqc/test-program/sample/kernel.c
-      -DFAST -std=c99 -O2 -S -fverbose-asm
+    % /usr/bin/gcc ${INSTALL_DIRECTORY}/hcqc/test-program/sample/kernel.c \
+      -DFAST -std=c99 -O2 -S -fverbose-asm \
       -o ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/kernel.s
 
 ### Executing metric programs
@@ -298,7 +298,7 @@ When the metric program name is M, HCQC executes the set of scripts
     ....
     ${INSTALL_DIRECTORY}/hcqc/command/metric/M/M999.py
 
-under directory
+under the directory
 
     ${INSTALL_DIRECTORY}/hcqc/command/metric/M
 
@@ -320,7 +320,7 @@ Therefore, HCQC executes the script that exists under the directory
     
 This directory has only the following script file:
 
-  ${INSTALL_DIRECTORY}/hcqc/command/metric/kind/kind999.py
+    ${INSTALL_DIRECTORY}/hcqc/command/metric/kind/kind999.py
 
 and, HCQC executes this script.
 
@@ -332,11 +332,16 @@ In this example, a control flow graph is created from the file
 
     ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/kernel.s
 
-and a file
+and the file
 
     ${INSTALL_DIRECTORY}/hcqc/work/sample/CONFIG/kind/kernel.s.dot
 
 which represents the control flow graph is created.
+This file contains information for Graphviz `dot` command.
+In this example, the control flow graph is as follows:
+
+![CFG image](https://github.com/Linaro/hcqc/doc/cfg.png?raw=true)
+
 The information of this control flow graph corresponds to the following part of the result information file.
 
     [ "TITLE", ["CFG", "DEPTH"
@@ -349,7 +354,7 @@ The information of this control flow graph corresponds to the following part of 
     [ "       cond .L5", [ "1",
     [ ".L1         end", [ "0",
 
-It corresponds to the first and second column parts of the csv file of the result report file.
+It corresponds to the first and second column parts of the CSV file of the result report file.
 
     CFG,DEPTH
     kernel cond .L1,0
@@ -368,7 +373,7 @@ Also, `end` means the end of the function.
 
 (2) Information unique to the metric program is collected and output as information of additional columns to the result file.
 
-For example, the metric program `kind` classifies the mnemonic contained in each basic block of the control flow graph into a memory access instruction (memory), a branch instruction (branch), and others (other).
+For example, the metric program `kind` classifies the mnemonic contained in each basic block of the control flow graph into a memory access instruction (`memory`), a branch instruction (`branch`), and others (`other`).
 In this example, `kind` generates the following part of the result information file.
 
     "memory", "branch", "other"]],
@@ -408,23 +413,23 @@ In this example, the file name is as follows:
     
     ${INSTALL_DIRECTORY}/hcqc/result/sample/CONFIG--sample--kind.json
 
-`Clean` processing does not delete the file under `result`.
+The command `clean-all.sh` does not delete the file under the directory `result`.
 Therefore, if the same configuration file, test program, and metric program are specified and executed for the second time and thereafter:
 
     % ./command/hcqc CONFIG sample kind
 
-At this time, the file name of the result to be created is:
+In this case, the file name of the result to be created is:
 
     ${INSTALL_DIRECTORY}/hcqc/result/sample/CONFIG--sample--kind.json.new
 
 first.
-And HCQC compares the following two files.
+And HCQC compares the contents of the following two files:
 
     ${INSTALL_DIRECTORY}/hcqc/result/sample/CONFIG--sample--kind.json
     ${INSTALL_DIRECTORY}/hcqc/result/sample/CONFIG--sample--kind.json.new
     
-If the contents of these two files are the same, delete the new file (.new).
-If the contents of these two files are different, rename the old file to the file name with the current time appended to the old file, for example
+If the contents of these two files are the same, delete the new file with the suffix `.new`.
+If those are different, HCQC rename the old file to the file name with the current time appended to the old file, for example
 
     ${INSTALL_DIRECTORY}/hcqc/result/sample/CONFIG--sample--kind.json--2017-10-12-13-26-13
 
@@ -436,9 +441,38 @@ That is, as a result, the following two files remain.
 
 ### Creating report files
 
-????????????????????
+All result files of hcqc command are data with JSON format.
+the command `./command/hcqc-report` converts the data of these results into a table of CSV format.
+For example, the command
 
-## The role of the metric program
+    % ./command/hcqc-report CONFIG TEST_PROGRAM_NAME REPORT_NAME METRIC_PROGRAM
+
+finds the result data file which is
+
+    ${INSTALL_DIRECTORY}/hcqc/result/TEST_PROGRAM_NAME/CONFIG--TEST_PROGRAM_NAME--METRIC_PROGRAM_NAME.json
+
+and generate the report file which is
+
+    ${INSTALL_DIRECTORY}/hcqc/report/TEST_PROGRAM_NAME/CONFIG--TEST_PROGRAM_NAME--REPORT_NAME.csv
+
+The command `./command/hcqc-report` can combine multiple tables.
+For example, the command
+
+    % ./command/hcqc-report CONFIG TEST_PROGRAM_NAME REPORT_NAME M1 M2 ... Mn
+
+can combine tables for the following data files in the order specified:
+
+    ${INSTALL_DIRECTORY}/hcqc/result/TEST_PROGRAM_NAME/CONFIG--TEST_PROGRAM_NAME--M1.json
+    ${INSTALL_DIRECTORY}/hcqc/result/TEST_PROGRAM_NAME/CONFIG--TEST_PROGRAM_NAME--M2.json
+    ...
+    ${INSTALL_DIRECTORY}/hcqc/result/TEST_PROGRAM_NAME/CONFIG--TEST_PROGRAM_NAME--Mn.json    
+
+This is possible because the CFG and DEPTH columns in the result table are equivalent
+when the result information is generated from the same configuration file and test program.
+
+## The Metric Program
+
+    ???ADD MORE EXPLANATION HERE???
 
 ### Status of each metric program
 
@@ -449,37 +483,239 @@ That is, as a result, the following two files remain.
 |x86_64 | GCC | Y | N | N | N | N | N |
 |x86_64 | Clang/LLVM | Y | N | Y | N | N | N |
 
-### op
+### `op`
+
+This metric program is for ???.
 
 ???
 
-### kind
+### `kind`
+
+This metric program is for ???.
 
 ???
 
-### regalloc
+### `regalloc`
+
+This metric program is for investigating the quality of generating spill codes by the compiler.
 
 ???
 
-## <a name="HOWCONFIG"> How to create new configuration files 
+### `ils`
+
+This metric program is for investigating the quality of instruction scheduling by the compiler.
+This program has not been implemented yet.
+
+### `swpl`
+
+This metric program is for investigating the quality of software pipelining by the compiler.
+This program has not been implemented yet.
+
+### `vectorize`
+
+This metric program is for investigating the quality of vectorization or SIMDization by the compiler.
+This program has not been implemented yet.
+
+## <a name="HOWCONFIG"> How to Create New Configuration Files
+
+In the following, it is assumed that the name of the newly created configuration file is `NEWCONFIG`.
+In this case, it is necessary to add a new file
+
+    ${INSTALL_DIRECTORY}/hcqc/config/NEWCONFIG.json
+
+under the directory
+
+    ${INSTALL_DIRECTORY}/hcqc/config
+
+The file `NEWCONFIG.json` need to define the following fields:
+
+* `DISTRIBUTION`
+
+  This field defines the name of OS distribution.
+  This field is not currently used.
+  
+* `ARCH`
+
+  This field defines the machine hardware name.
+  HCQC checks whether this definition matches the result of `uname -m`.
+
+* `CPU`
+
+  This field defines the name of CPU.
+  This field is not currently used.
+
+* `LANGUAGE`
+
+  This field defines the programming language which targeted by the compiler `COMPILER`.
+  HCQC checks whether this definition matches the `LANGUAGE` field in the `program-info.json` for test programs.
+
+* `COMPILER`
+
+  This field defines the name of the compiler to be investigated.
+  The string is used for selecting the Python class in `hcqc/command/config.py`.
+  Currently only `GCC` and `ClangLLVM` are supported.
+  For introducing the new compiler name, you need to add definitions for it in the script file `hcqc/command/config.py`(see [How to Add New Architectures or Compilers](#HOWARCH)).
+
+* `COMMAND`
+
+  This field defines the full path name of the compiler `COMPILER` to be investigated.
+
+* `VERSION`
+
+  This field defines the version number of the compiler `COMPILER` to be investigated.
+  HCQC checks whether this definition matches the result of the `COMMAND` execution results with the `--version` option.
+
+* `OPT_FLAGS`
+
+  This field defines the optimization options using the compiler `COMPILER` to be investigated.
+  HCQC regards a pair of a compiler and optimization options used by its compiler as identifiers to be investigated.
+
+* `ASM_FLAGS`
+
+  This field defines the options for generating assembly codes by the compiler `COMPILER` to be investigated.
+  Because HCQC uses assembly code with detailed information added, the option `-S` may not be enough.
+
+* `FLAG_DB`
+
+  This field defines the flag variables used in program information files.
+  Each compiler often has different options for the same feature.
+  Program information files uses flag variables in the definitions, then 
+  HCQC replaces those flag variables using the definition of the field `FLAG_DB` before executing the compiler.
+  If there is no option to specify the specific feature in the target compiler, you can specify an empty string for the flag variable like the following:
+
+      "FLAG_DB" : [["?COMPILER_RARE_FLAG", ""], ...]
+
+By executing HCQC with option `--v`, you can check what kind of commands are actually executed for the processing of the test program using the specific configuration file.
+
+## How to Add New Test Programs
+
+In the following, it is assumed that the name of the newly added test program is `newtest`.
+In this case, it is necessary to create a new directory
+
+    ${INSTALL_DIRECTORY}/hcqc/test-program/newtest
+
+under the directory
+
+    ${INSTALL_DIRECTORY}/hcqc/test-program
+   
+This new directory should have at least the following three files:
+
+* `program-info.json`
+
+  This file defines how to compile, execute, and check the result of the test program.
+  See below for details of this definition.
+  
+* a source file of kernel part of the test program
+
+  In order to prevent the function from disappearing due to interprocedural optimizations performed in the file,
+  the kernel part and the main part of the test program should be divided into different files.
+
+* a source file of main part of the test program
+
+  The main part of the test program should execute the kernel function in the kernel file and verify the result.
+  If there is no output result in the program, the main part should report the result status with an exit code.
+
+Both the compiler command and the generated executable file are executed in directory
+
+    ${INSTALL_DIRECTORY}/hcqc/test-program/newtest
+
+then, header files etc. in this directory can be referenced from the test program by the relative path.
+
+The file `program-info.json` need to define the following fields:
+
+* `LANGUAGE`
+
+  This field defines the programming language which the test program is descriibed.
+  HCQC checks whether this definition matches the `LANGUAGE` field in the configuration file.
+
+* `MAIN_FLAGS`
+
+  This field defines the options for compiling the main file by the compiler to be investigated.
+  
+* `KERNEL_FLAGS`
+
+  This field defines the options for compiling the kernel file by the compiler to be investigated.
+  This field should not contain optimization options which should be included in the configuration file.
+
+* `LINK_FLAGS`
+
+  This field defines the options for building the executable file by the compiler to be investigated.
+
+* `LIB_LIST`
+
+  This field defines the library eoptions for building the executable file by the compiler to be investigated.
+
+* `MAIN_FILENAME`
+
+  This field defines the file name of the main part.
+
+* `KERNEL_FILENAME`
+
+  This field defines the file name of the kernel part.
+
+* `KERNEL_FUNCTION_NAME`
+
+  This field defines the kernel function name in the kernel file.
+  This kernel function should be called from the main file.
+  There is no problem if other functions in the kernel file are removed by some optimizations.
+
+* `INPUT`
+
+  This field defines how to handle the input data for the generated executable file.
+
+  - `[ "STDIN", INPUT_FILENAME ]`
+
+    This means the generated executable file is executed by inputting the data of the file INPUT_FILENAME to the standard input.
+
+  - `[ "FILE", INPUT_FILENAME ]`
+
+    This means the generated executable file is executed by specifying the input file name INPUT_FILENAME on the command line.
+    
+  - `[ "NONE", "NONE" ]`
+
+    This means the generated executable file doesn't use input data for its execution.
+
+* `OUTPUT`
+
+  This field defines how to handle the output data for the generated executable file.
+
+  - `[ "STDOUT", OUTPUT_FILENAME ]`
+
+    This means the execution of the generated executable file outputs the result data into the standard output.
+    HCQC verifies the output by comparing the content of the file OUTPUT_FILENAME.
+
+  - `[ "FILE", OUTPUT_FILENAME ]`
+
+    This means the execution of the generated executable file outputs the result data into the outut file OUTPUT_FILENAME.
+    HCQC verifies the output by comparing the content of the answer file OUTPUT_FILENAME.
+
+  - `[ "NONE", "NONE" ]`
+
+    This means the generated executable file doesn't generate output for its execution.
+    The execution result is verified only with the end code.
+
+If the test program uses the INPUT_FILENAME file or the OUTPUT_FILENAME file, they should be placed under the test program directory, for example:
+
+    ${INSTALL_DIRECTORY}/hcqc/test-program/newtest
+
+When defining compiler options in the above fields, the following rules should be followed:
+- Those field should not contain optimization options which should be included in the configuration file.
+- Those field should contain only compiler independent options.
+  If compiler-dependent options are required, flag variables should be used.  
+
+By executing HCQC with option `--v`, you can check what kind of commands are actually executed for the processing of the test program.
+
+## How to Add New Metric Programs
 
  ???
 
-## How to add new test programs
-
- ???
-
-## How to add new metric programs
-
- ???
-
-## <a name="HOWARCH">How to add new architectures
+## <a name="HOWARCH">How to Add New Architectures or Compilers
 
  ???
 
 ## Known Bugs
 
-Currently, HCQC cannot handle the assembly code with table branches and function calls by function pointers.
+Currently, HCQC cannot handle the assembly code with table branches or function calls by function pointers.
 
 ## Future Work
 
