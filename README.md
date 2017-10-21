@@ -8,7 +8,25 @@ Many HPC applications have a few hot spots which are a very narrow range of code
 These hot spots occupy most of the program execution time.
 Therefore, the quality of the code of the hot spot is important for performance.
 
-    ???ADD MORE EXPLANATION HERE???
+HCQC is a program for collecting metric data for investigating the quality of hotspot code by some compilers for registered test programs.
+There is not much meaning with just one compiler's data, but it is meaningful to compare the results of multiple compilers.
+A typical comparison method is as follows.
+
+* On Architecture `A`, Compiler `X`  vs. Compiler `Y`
+
+  This can evaluate the advantages and disadvantages of compilers `X` and `Y`.
+  
+* Compiler `X` version `V` vs. Compiler `X` version `W`
+
+  This can check the effect of changes in compiler version.
+
+* Compiler `X` on Architecture `A` vs. Architecture `B`
+
+  This can confirm the lack of compiler `X`'s features when the architecture changes.
+
+* Compiler `X` on Architecture `A` vs. Compiler `Y` on Architecture `B`
+
+  If the architecture `A` is new and the architecture `B` is mature, this comparison will provide important information on compiler `X`'s enhancement.
 
 HCQC is a tool to help improve the performance of hot spots.
 
@@ -527,7 +545,7 @@ The details of this process vary depending on the compiler.
 
   The following script
   
-      hcqc/command/metric/regalloc/regalloc000.py
+      ${INSTALL_DIRECTORY}/hcqc/command/metric/regalloc/regalloc000.py
 
   implements the process of detecting and counting them.
 
@@ -542,7 +560,7 @@ The details of this process vary depending on the compiler.
 
   The following script
   
-      hcqc/command/metric/regalloc/regalloc001.py
+      ${INSTALL_DIRECTORY}/hcqc/command/metric/regalloc/regalloc001.py
 
   implements the process of detecting and counting them.
 
@@ -793,6 +811,8 @@ In the following methods, the argument `target_config` represents an instance of
 
       ${INSTALL_DIRECTORY}/hcqc/command/cfg.py
 
+  Since the object of each basic block holds the information of the kernel part of the test program, it can be used for data analysis and collection.
+
 - `get_column_name_list(self)`
 
   This method returns a list of column names in the table of the metric program's result.
@@ -825,17 +845,124 @@ If the method `match_p` of one script returns True, HPCQ does not execute subseq
 
 The Python script
 
-    hcqc/command/test-metric.py
+    ${INSTALL_DIRECTORY}/hcqc/command/test-metric.py
 
 is a program for testing execution of any metric programs.
 For example, you can test `NEWMETRIC000.py` as follow:
 
-    python3 test-metric.py metric.NEWMETRIC.NEWMETRIC000 \
-            aarch64 ClangLLVM 4.0.1 /tmp/AsmByClangLLVM.s kernel_f /tmp/RESULT.json
+    % cd ${INSTALL_DIRECTORY}/hcqc/command
+    % python3 test-metric.py metric.NEWMETRIC.NEWMETRIC000 \
+              aarch64 ClangLLVM 4.0.1 /tmp/AsmByClangLLVM.s kernel_f /tmp/RESULT.json
+
+At the moment, the metric program gets the necessary information from the resulting assembly code.
+If the new metric program is insufficient only with the assembly code, the compiler needs to be modified to output the necessary information.
 
 ## <a name="HOWARCH">How to Add New Architectures or Compilers
 
- ???
+### How to Add New Architectures
+
+For introducing a new architecture for investigating the quality of compilers, it is necessary to create a class representing the architecture in the Python script file
+
+    ${INSTALL_DIRECTORY}/hcqc/command/config.py
+
+In the following, it is assumed that the name of the newly added architecture is `myarch`.
+This name is used in the `ARCH` field of the configuration file and must match the name returned by command `uname -m`.
+This rule is to suppress the use of the created configuration file in the wrong environment.
+
+A class representing a new architecture needs to be created as a subclass of the `Config` class.
+Also, the class name must be created as a class name by adding `C_` at the beginning of the architecture name and adding` __` at the end.
+For example, if the name of the newly added architecture is `myarch`, the following class definition is required.
+
+    class C_myarch__(Config):
+    
+With this rule, HCQC automatically detects its class definition from the information in the `ARCH` field in the configuration file.
+The class `Config` defines the following methods.
+
+- `function_entry_p(self, name, line)`
+
+  This method determines whether any line `line` of assembly code is the entry to the kernel function.
+  `name` is the name of the kernel function.
+
+- `function_exit_p(self, name, line)`
+
+  This method determines whether any line `line` of assembly code is the exit to the kernel function.
+  `name` is the name of the kernel function.
+
+- `bb_label(self, line)`
+  This method determines whether any line `line` of assembly code represents the entry label of the basic block. 
+  
+For these methods, if another definition is needed for the newly added architecture `myarch`,
+the class `C_myarch__` can override those definitions.
+
+- `get_asm_comment(self, line)`
+
+  This method returns the string of the comment if  any line `line` of assembly code contains the comment of the assembly code.
+  Otherwise, it returns None.
+
+- `bb_branch(self, line)`
+
+  If any line `line` of assembly contains a control transfer instruction, this method returns the mnemonic of the instruction and the label of the control transfer destination(if any) as a pair.
+  Otherwise, it returns None.
+
+- `call_p(self, branch_op, branch_target)`
+
+  This method decides whether the mnemonic `branch_op` and the control transfer destination label `branch_target`(if any) represent a function call instruction.
+
+- `fall_through_p(self, branch_op)`
+
+  This method decides whether the mnemonic `branch_op` of control transfer instructions falls through the next basic block.
+
+- `op(self, line)`
+
+  If any line `line` of assembly code is an instruction, then this method returns its mnemonic.
+  Otherwise, it returns None.
+
+- `load_op_p(self, op)`
+
+  This method determines whether the mnemonic `op` is a memory read instruction.
+
+- `store_op_p(self, op)`
+
+  This method determines whether the mnemonic `op` is a memory write instruction.
+
+- `control_transfer_op_p(self, op)`
+
+  This method determines whether the mnemonic `op` is a control transfer instruction.
+
+Defining a new architecture alone is meaningless.
+To use that definition, you need to define a compiler that will investigate the quality on the newly added architecture.
+
+### How to Add New Compilers
+
+For introducing a new compiler for investigating the quality of it, it is necessary to create a class representing the compiler in the Python script file
+
+    ${INSTALL_DIRECTORY}/hcqc/command/config.py
+
+HCQC treats the compiler and the architecture that runs the compiler as a pair.
+Therefore, if there is no definition of the architecture to run the new compiler, it is necessary to define the architecture first.
+In the following, it is assumed that the name of the newly added compiler is `Foo` and the name of the architecture that runs the compiler `Foo` is` myarch`.
+
+A class representing a new compiler needs to be created as a subclass of the class representing the architecture to run the compiler.
+Also, the class name must be created by appending the name of the compiler after the class name of the architecture.
+For example, if the name of a newly added compiler is `Foo`, the following class definition is required.
+
+    class C_myarch__Foo(C_myarch__):
+
+This rule is for automatically detecting the class definition from the information in the `ARCH` field and` COMPILER` field in the configuration file.
+If the compiler `Foo` needs to change the behavior of the method defined in the class ` C_myarch__` or the class `Config`,
+the class `C_myarch__Foo` can override those definitions.
+Since the name of the compiler is used as a Python class name, the name needs to be created only from characters that can be used for Python identifiers.
+
+You can test the new definition of the compiler by creating a control flow graph using the assembly code which the compiler generated.
+The Python script
+
+    ${INSTALL_DIRECTORY}/hcqc/command/test-cfg.py
+
+is a program for testing generating control flow graphs.
+For example, you can generate a control flow graph for the assembly code as follows:
+
+    % cd ${INSTALL_DIRECTORY}/hcqc/command
+    % python3 test-cfg.py aarch64 ClangLLVM 4.0.1 /tmp/AsmByClangLLVM.s kernel_f
 
 ## Known Bugs
 
@@ -843,4 +970,4 @@ Currently, HCQC cannot handle the assembly code with table branches or function 
 
 ## Future Work
 
- ???
+* Add supports for the Scalable Vector Extension(SVE) of AArch64 if it becomes available for GCC or Clang/LLVM.
