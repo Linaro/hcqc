@@ -1,6 +1,6 @@
 ## Running samples
 
-Please fix both `COMPILER' and `VERSION' fields in hcqc/config/gcc-config.json and hcqc/config/clang-config.json to suit your environment.
+Please fix both `COMPILER' and `VERSION' fields in hcqc/config/gcc-config.json and hcqc/config/clang-config.json to suit your environment on AArch64.
 
 The following commands:
 

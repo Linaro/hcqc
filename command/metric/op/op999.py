@@ -51,7 +51,7 @@ class OpMetricWorker(driver.MetricWorker):
     def match_p(self, target_config, test_name):
         return True
 
-    def set_up_before_getting_data(self, target_config, db_filename, bb_list, column_list):
+    def set_up_before_getting_data(self, target_config, bb_list):
         make_all_opmap(target_config, bb_list)
 
     def get_column_name_list(self):

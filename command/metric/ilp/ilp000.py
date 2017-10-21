@@ -12,7 +12,7 @@ class IlpMetricWorker(driver.MetricWorker):
             return True
         return False
 
-    def set_up_before_getting_data(self, target_config, db_filename, bb_list, column_list):
+    def set_up_before_getting_data(self, target_config, bb_list):
         pass
 
     def get_column_name_list(self):

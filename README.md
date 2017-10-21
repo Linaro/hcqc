@@ -753,7 +753,85 @@ By executing HCQC with option `--v`, you can check what kind of commands are act
 
 ## How to Add New Metric Programs
 
- ???
+In the following, it is assumed that the name of the newly created metric program is `NEWMETRIC`.
+In this case, it is necessary to create a new directory
+
+    ${INSTALL_DIRECTORY}/hcqc/command/metric/NEWMETRIC
+
+under the directory
+
+    ${INSTALL_DIRECTORY}/hcqc/command/metric
+
+A new Python script file
+
+    ${INSTALL_DIRECTORY}/hcqc/command/metric/NEWMETRIC/NEWMETRIC000.py
+    
+needs to be added under
+
+    ${INSTALL_DIRECTORY}/hcqc/command/metric/NEWMETRIC
+
+The file `NEWMETRIC000.py` needs to define a new class which is a subclass of the class `driver.MetricWorker`.
+The definition of the class `driver.MetricWorker` exists in the following file:
+
+    ${INSTALL_DIRECTORY}/hcqc/command/driver.py
+
+In the following, let `XxxMetricWorker` be the new class name.
+This new class needs to have the definition of the following methods.
+In the following methods, the argument `target_config` represents an instance of class `config.Config` which includes information from the configuration file which is the file specified on the command line of command `./command/hcqc`.
+
+- `match_p(self, target_config, test_name)`
+
+  This method decides whether or not to use this script `NEWMETRIC000.py` for the specified configuration `target_config` or the est program name `test_name`.
+  If the result of this method is True, HCQC uses this script file.
+  If the result is False, HCQC tries to use another script file.
+
+- `set_up_before_getting_data(self, target_config, bb_list)`
+
+  This method defines the operation to be performed before the metric program returns the result data.
+  `bb_list` represents a list of basic blocks of the control flow graph.
+  Each basic block of an element of the `bb_list` is an instance object of the class `cfg.BasicBlock` in the file
+
+      ${INSTALL_DIRECTORY}/hcqc/command/cfg.py
+
+- `get_column_name_list(self)`
+
+  This method returns a list of column names in the table of the metric program's result.
+  The implementation of this method depends on the metric program.
+  For example, this method of the metric program `kind` returns the following result.
+
+      [ 'memory', 'branch', 'other']
+
+  This method in the metric program `op` returns a list of the mnemonics of the instructions contained in the kernel function in the test program.
+  Therefore, the metric program `op` needs to create this list.
+  The method `set_up_before_getting_data` in the metric program `op` implements the work.
+
+- `get_data_list(self, target_config, bb)`
+
+   The row of the result table of the metric program corresponds to each basic block of the control flow graph.
+   This method returns a list of data corresponding to the basic block bb.
+   The length of the resulting data list must be the same as the length of the list of column names returned by the method `get_column_name_list`.
+
+- `get_summary_list(self, target_config)`
+
+   The last row of the result table of the metric program represents summary data for each column.
+   This method returns a list of summary data in the last row.
+   The length of the resulting data list must be the same as the length of the list of column names returned by the method `get_column_name_list`.
+
+The data element of the method that returns the result data needs to be a string.
+
+First, HCQC creates a control flow graph of the test program.
+Then HCQC tries executing each script in order of name from the directory of the specified metric program name.
+If the method `match_p` of one script returns True, HPCQ does not execute subsequent scripts.
+
+The Python script
+
+    hcqc/command/test-metric.py
+
+is a program for testing execution of any metric programs.
+For example, you can test `NEWMETRIC000.py` as follow:
+
+    python3 test-metric.py metric.NEWMETRIC.NEWMETRIC000 \
+            aarch64 ClangLLVM 4.0.1 /tmp/AsmByClangLLVM.s kernel_f /tmp/RESULT.json
 
 ## <a name="HOWARCH">How to Add New Architectures or Compilers
 

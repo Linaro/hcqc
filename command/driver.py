@@ -427,6 +427,12 @@ def print_one_row(fout, bb_field, depth_field, column_data_list):
     print(']]', file=fout, end='')
 
 class MetricWorker():
+    def match_p(self, target_config, test_name):
+        error_message('match_p')
+
+    def set_up_before_getting_data(self, target_config, bb_list):
+        error_message('set_up_before_getting_data')
+        
     def get_column_name_list(self):
         error_message('get_column_name_list')
 
@@ -437,7 +443,7 @@ class MetricWorker():
         error_message('get_summary_list')
 
 def metric_work_body_core(target_config, db_filename, bb_list, column_list, metric_worker):
-    metric_worker.set_up_before_getting_data(target_config, db_filename, bb_list, column_list)
+    metric_worker.set_up_before_getting_data(target_config, bb_list)
     with open(db_filename, 'wt') as fout:
         print('[', file=fout)
         column_name_list = metric_worker.get_column_name_list()
