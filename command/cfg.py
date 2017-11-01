@@ -240,127 +240,210 @@ def paint_black(status_map, bb):
     status_map[bb][1] = current_time
     current_time += 1    
 
-def depth_first_search(next_map, status_map, bb):
+def depth_first_search(next_map, status_map, tree_edge_map, bb):
     paint_gray(status_map, bb)
     next_bb_list = next_map[bb]
     for next_bb in next_bb_list:
         if white_p(status_map, next_bb):
-            depth_first_search(next_map, status_map, next_bb)
+            # tree_edge_map : dest -> src
+            tree_edge_map[next_bb].append(bb)
+            depth_first_search(next_map, status_map, tree_edge_map, next_bb)
     paint_black(status_map, bb)
-
-def make_back_edge_map(bb_list, next_map):
-    global current_time
-    current_time = 0
-    start_bb = bb_list[0]
-    status_map = {}
-    for bb in bb_list:
-        status_map[bb] = [ None, None ]
-    depth_first_search(next_map, status_map, start_bb)
-    for bb in bb_list:
-        if not black_p(status_map, bb):
-            error_message("make_back_edge_map")
-    back_edge_map = {}
-    for bb in bb_list:
-            back_edge_map[bb] = []
-    for bb in bb_list:
-        next_bb_list = next_map[bb]
-        for next_bb in next_bb_list:
-            if bb == next_bb:
-                back_edge_map[bb].append(next_bb)
-            if status_map[next_bb][0] < status_map[bb][0] and status_map[bb][1] < status_map[next_bb][1]:
-                back_edge_map[bb].append(next_bb)
-    return back_edge_map
-
-def make_header_map(bb_list, next_map):
-    back_edge_map = make_back_edge_map(bb_list, next_map)
-    header_map = {}
-    for bb in bb_list:
-        dest_list = back_edge_map[bb]
-        if len(dest_list) != 0:
-            for dest_bb in dest_list:
-                if dest_bb not in header_map:
-                    header_map[dest_bb] = []
-                header_map[dest_bb].append(bb)
-    return header_map
 
 def find_depth(bb_list):
     global verbose_p
     previous_map = make_previous_map(bb_list)
     next_map = make_next_map(bb_list)
-    header_map = make_header_map(bb_list, next_map)
-    add_space_list = []
-    for bb in bb_list:
-        if bb in header_map:
-            header = bb
-            src_list = header_map[header]
-            if len(src_list) == 1 and len(next_map[src_list[0]]) == 1:
-                pass
-            else:
-                if verbose_p:
-                    print('add_bb_on_edge (src_list -> header)')
-                add_space_list.append((src_list,header))
-            external_list = []
-            for x in previous_map[header]:
-                if x not in src_list:
-                    external_list.append(x)
-            if len(external_list) == 1 and len(next_map[external_list[0]]) == 1:
-                pass
-            else:
-                if verbose_p:
-                    print('add_bb_on_edge (external_list -> header)')
-                add_space_list.append((external_list,header))
-    find_depth_main(bb_list, previous_map, next_map, add_space_list)
+    find_depth_main(bb_list, previous_map, next_map)
 
-def find_depth_main(bb_list, previous_map, next_map, add_space_list):
-    fix_bb_list = bb_list.copy()
-    fix_previous_map = previous_map.copy()
-    fix_next_map = next_map.copy()
-    dummy_bb = 0
-    for add_space in add_space_list:
-        (src_list, dest) = add_space
-        for src in src_list:
-            delete_edge(fix_previous_map, dest, src)
-            delete_edge(fix_next_map, src, dest)
-        fix_bb_list.append(dummy_bb)
-        fix_previous_map[dummy_bb] = []
-        fix_next_map[dummy_bb] = []
-        for src in src_list:
-            fix_previous_map[dummy_bb].append(src)
-            fix_next_map[src].append(dummy_bb)
-        fix_previous_map[dest].append(dummy_bb)
-        fix_next_map[dummy_bb].append(dest)
-        dummy_bb += 1
-    loop_info_map = construct_natural_loop(fix_bb_list, fix_previous_map, fix_next_map)
+def find_depth_main(bb_list, previous_map, next_map):
+    loop_info_map = construct_natural_loop(bb_list, previous_map, next_map)
     for h in loop_info_map.keys():
         for loop_info in loop_info_map[h]:
             (bb, loop_set) = loop_info
             for bb in loop_set:
-                if not isinstance(bb, int):
-                    bb.depth += 1
-
-def delete_edge(map, src, dest):
-    dest_list = map[src]
-    if not dest in dest_list:
-        error_message("delete_edge")
-    dest_list.remove(dest)
-    
-def construct_natural_loop(bb_list, previous_map, next_map):
-    back_edge_map = make_back_edge_map(bb_list, next_map)
-    loop_info_map = {}
+                bb.depth += 1
     for bb in bb_list:
-        dest_list = back_edge_map[bb]
-        for dest in dest_list:
-            loop_set = construct_natural_loop_sub(bb_list, previous_map, bb, dest)
-            if not dest in loop_info_map:
-                loop_info_map[dest] = []
-            loop_info_map[dest].append((bb, loop_set))
+        if bb in next_map[bb]:
+            bb.depth += 1
+
+def make_back_edge_list(bb_list, previous_map, next_map):
+    dominator_tree = make_dominator_tree(bb_list, previous_map, next_map)
+    back_edge_list = []
+    for src in bb_list:
+        for dest in next_map[src]:
+            if dominate_p(dominator_tree, dest, src):
+                back_edge_list.append((src, dest))
+    return back_edge_list
+
+def dominate_p(dominator_tree, x, y):
+    p = y
+    while p != None:
+        p = get_parent(dominator_tree, p)
+        if p == x:
+            return True
+    return False
+
+def make_dominator_tree(bb_list, previous_map, next_map):
+    start_bb = bb_list[0]
+    (dfs_vector, spanning_tree) = dominator_init(bb_list, previous_map, next_map, start_bb)
+    semi_map = {}
+    bucket_map = {}
+    label_map = {}
+    ancestor_map = {}
+    idom_map = {}
+    dfs_number = 0
+    for v in dfs_vector:
+        semi_map[v] = dfs_number
+        label_map[v] = v
+        bucket_map[v] = []
+        ancestor_map[v] = None
+        idom_map[v] = None
+        dfs_number += 1
+    dfs_number = len(dfs_vector) - 1
+    while dfs_number != 0:
+        w = dfs_vector[dfs_number]
+        # Step 2
+        for v in previous_map[w]:
+            u = dominator_eval(semi_map, label_map, ancestor_map, v)
+            if semi_map[u] < semi_map[w]:
+                semi_map[w] = semi_map[u]
+        bucket_map[dfs_vector[semi_map[w]]].insert(0, w)
+        dominator_link(ancestor_map, get_parent(spanning_tree, w), w)
+        # Step 3
+        v_list = bucket_map[get_parent(spanning_tree, w)]
+        for v in v_list:
+            u = dominator_eval(semi_map, label_map, ancestor_map, v)
+            if semi_map[u] < semi_map[v]:
+                idom_map[v] = u
+            else:
+                idom_map[v] = get_parent(spanning_tree, w)
+        bucket_map[get_parent(spanning_tree, w)] = []
+        dfs_number -= 1
+    # Step 4
+    dfs_number = 1
+    while dfs_number < len(dfs_vector):
+        w = dfs_vector[dfs_number]
+        if idom_map[w] != dfs_vector[semi_map[w]]:
+            idom_map[w] = idom_map[idom_map[w]]
+        dfs_number += 1
+    idom_map[start_bb] = None
+    dominator_tree = {}
+    for bb in bb_list:
+        dominator_tree[bb] = []
+    for bb in bb_list:
+        idom = idom_map[bb]
+        if idom:
+            # dominator_tree : bb -> dom
+            add_edge(dominator_tree, bb, idom)
+        else:
+            if bb != start_bb:
+                error_message("make_dominator_tree")
+    #dump_tree(bb_list, dominator_tree)
+    return dominator_tree
+
+def dump_tree(bb_list, tree):
+    print('digraph CFG {')
+    mmm = {}
+    index = 0
+    for bb in bb_list:
+        mmm[bb] = index
+        index += 1
+    for bb in bb_list:
+        index = mmm[bb]
+        line_number = bb.start_line_number
+        label = bb.label
+        depth = bb.depth
+        if not label:
+            label = ''
+        print(str(index) + ' [label="' + str(line_number) + ':' + label + ':' + str(depth) + '"];')
+    for bb in bb_list:
+        next_bb_list = tree[bb]
+        if next_bb_list:
+            for nbb in next_bb_list:
+                print(str(mmm[bb]) + ' -> ' + str(mmm[nbb]) + ';')
+    print('}')
+
+def dominator_init (bb_list, previous_map, next_map, start_bb):
+    global current_time
+    status_map = {}
+    tree_edge_map = {}
+    for bb in bb_list:
+        status_map[bb] = [ None, None ]
+        tree_edge_map[bb] = []
+    current_time = 0
+    depth_first_search(next_map, status_map, tree_edge_map, start_bb)
+    for bb in bb_list:
+        if not black_p(status_map, bb):
+            error_message("dominator_init")
+    pair_vector = []
+    for bb in bb_list:
+        dt = status_map[bb][0]
+        pair_vector.append((dt, bb))
+    pair_vector = sorted(pair_vector, key=lambda x: x[0])
+    dfs_vector = []
+    for (n, bb) in pair_vector:
+        dfs_vector.append(bb)
+    return (dfs_vector, tree_edge_map)
+
+def dominator_eval(semi_map, label_map, ancestor_map, v):
+    a = ancestor_map[v]
+    if a:
+        dominator_compress(semi_map, label_map, ancestor_map, v)
+        return label_map[v]
+    else:
+        return v
+
+def dominator_compress(semi_map, label_map, ancestor_map, v):
+    a = ancestor_map[ancestor_map[v]]
+    if a:
+        dominator_compress(semi_map, label_map, ancestor_map, ancestor_map[v])
+    if semi_map[label_map[ancestor_map[v]]] < semi_map[ancestor_map[v]]:
+        label_map[v] = label_map[ancestor_map[v]]
+    ancestor_map[v] = ancestor_map[ancestor_map[v]]
+
+def dominator_link(ancestor_map, v, w):
+    ancestor_map[w] = v
+
+def add_edge(map, src, dest):
+    if not dest in map[src]:
+        map[src].append(dest)
+
+def get_parent(tree, v):
+    prev_list = tree[v]
+    if len(prev_list) == 0:
+        return None
+    elif len(prev_list) == 1:
+        return prev_list[0]
+    else:
+        error_message("get_parent")
+    
+def find_end_bb(bb_list, next_map):
+    end_bb = None
+    for bb in bb_list:
+        if len(next_map[bb]) == 0:
+            if end_bb != None:
+                error_message("find_end_bb")
+            end_bb = bb
+    if end_bb == None:
+        error_message("find_end_bb")
+    return end_bb
+
+def construct_natural_loop(bb_list, previous_map, next_map):
+    back_edge_list = make_back_edge_list(bb_list, previous_map, next_map)
+    loop_info_map = {}
+    for (src, dest) in back_edge_list: 
+        loop_set = construct_natural_loop_sub(bb_list, previous_map, src, dest)
+        if not dest in loop_info_map:
+            loop_info_map[dest] = []
+        loop_info_map[dest].append((src, loop_set))
     return loop_info_map
 
 def construct_natural_loop_sub(bb_list, previous_map, src, dest):
     stack = []
     loop_set = [dest]
     if src == dest:
-        error_message("xxx")
+        error_message("construct_natural_loop_sub")
     if not src in loop_set:
         loop_set.insert(0, src)
         stack.insert(0, src)
@@ -397,7 +480,7 @@ def build_cfg(target_config, fin, function_name):
     bb_list = link_bb(bb_list)
     bb_list = cut_dead_bb(bb_list)
     bb_list = cut_redundant_tail_bb(bb_list)
-    find_depth(bb_list)
+    find_depth(bb_list.copy())
     if verbose_p:
         debug_print_for_bb_list(bb_list)
     return bb_list
