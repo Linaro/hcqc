@@ -398,9 +398,9 @@ def dominator_compress(semi_map, label_map, ancestor_map, v):
     a = ancestor_map[ancestor_map[v]]
     if a:
         dominator_compress(semi_map, label_map, ancestor_map, ancestor_map[v])
-    if semi_map[label_map[ancestor_map[v]]] < semi_map[ancestor_map[v]]:
-        label_map[v] = label_map[ancestor_map[v]]
-    ancestor_map[v] = ancestor_map[ancestor_map[v]]
+        if semi_map[label_map[ancestor_map[v]]] < semi_map[label_map[v]]:
+            label_map[v] = label_map[ancestor_map[v]]
+        ancestor_map[v] = ancestor_map[ancestor_map[v]]
 
 def dominator_link(ancestor_map, v, w):
     ancestor_map[w] = v
