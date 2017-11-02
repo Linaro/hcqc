@@ -3,6 +3,10 @@ import re
 
 verbose_p = False
 
+def error_message(message):
+    print('Error: ' + message + '\n')
+    sys.exit(1)
+
 class Config():
     def __init__(self, distribution, arch, cpu, compiler, version):
         self.distribution = distribution
@@ -15,7 +19,7 @@ class Config():
         return re.match('^' + name + ':', line)
 
     def function_exit_p(self, name, line):
-        return re.match('^\t.size\t' + name, line)
+        return re.match('^\t\.size\t' + name, line)
 
     def bb_label(self, line):
         global verbose_p
@@ -194,23 +198,36 @@ class C_aarch64__(Config):
         else:
             return False
 
-    def table_branch_p(self, branch_op, branch_target):
-        if branch_op in ['br'] and branch_target and branch_target[0] == 'x':
+    def tail_call_p(self, branch_op, branch_target):
+        if branch_op == 'b' and branch_target and re.match('[_\w]', branch_target[0]):
+            return True
+        else:
+            return False
+
+    def branch_by_register_p(self, branch_op, branch_target):
+        if branch_op == 'br' and branch_target and branch_target[0] == 'x':
+            return True
+        else:
+            return False
+
+    def table_branch_p(self, branch_op, branch_target, table_branch_label, line_list):
+        if branch_op == 'br' and branch_target and branch_target[0] == 'x':
+            pass
+        else:
+            error_message('table_branch_p')
+        if table_branch_label:
             return True
         else:
             return False
 
     def get_table_branch_prologue_number(self):
-        print('Error: get_table_branch_prologue_number')
-        sys.exit(1)
+        error_message('get_table_branch_prologue_number')
 
     def trace_table_branch_prologue(self, region_status, line):
-        print('Error: trace_table_branch_prologue')
-        sys.exit(1)
+        error_message('trace_table_branch_prologue')
 
     def get_table_branch_content(self, line):
-        print('Error: get_table_branch_content')
-        sys.exit(1)
+        error_message('get_table_branch_content')
         
     def fall_through_p(self, branch_op):
         if branch_op in ['b', 'ret']:
@@ -235,6 +252,9 @@ class C_aarch64__(Config):
         return op in self.control_transfer_op_dict
 
 class C_aarch64__ClangLLVM(C_aarch64__):
+    def function_exit_p(self, name, line):
+        return re.match('^\.Lfunc_end\d+:$', line)
+
     def get_table_branch_prologue_number(self):
         # .section .rodata,"a",@progbits
 	# .p2align 3
@@ -361,17 +381,17 @@ class C_x86_64__(Config):
         m = re.match('^\t(jmp)\t([_\w\d]+).*', line)
         if m:
             tmp = m.groups()
-            # Tail calls like 'jmp fputc'.
-            return ('jmp', None)
+            # tail calls
+            return tmp
         m = re.match('^\t(j[\w]*)\t(\.?[_\w\d]+).*', line)
         if m:
             tmp = m.groups()
             return tmp
-        m = re.match('^\t(jmpq)\t(\*%\w+).*', line)
+        m = re.match('^\t(jmpq)\t(\*[^\s]+).*', line)
         if m:
             tmp = m.groups()
             return tmp
-        m = re.match('^\t(jmp)\t(\*%\w+).*', line)
+        m = re.match('^\t(jmp)\t(\*[^\s]+).*', line)
         if m:
             tmp = m.groups()
             return tmp
@@ -383,21 +403,36 @@ class C_x86_64__(Config):
         else:
             return False
 
-    def table_branch_p(self, branch_op, branch_target):
-        print('Error: table_branch_p')
-        sys.exit(1)
+    def tail_call_p(self, branch_op, branch_target):
+        if branch_op == 'jmp' and branch_target and re.match('[_\w]', branch_target[0]):
+            return True
+        else:
+            return False
+
+    def branch_by_register_p(self, branch_op, branch_target):
+        if branch_op in ['jmp', 'jmpq'] and branch_target and branch_target[0] == '*':
+            return True
+        else:
+            return False
+
+    def table_branch_p(self, branch_op, branch_target, table_branch_label, line_list):
+        if branch_op in ['jmp', 'jmpq'] and branch_target and branch_target[0] == '*':
+            pass
+        else: 
+           error_message('table_branch_p')
+        if table_branch_label:
+            return True
+        else:
+            return False
 
     def get_table_branch_prologue_number(self):
-        print('Error: get_table_branch_prologue_number')
-        sys.exit(1)
+        error_message('get_table_branch_prologue_number')
 
     def trace_table_branch_prologue(self, region_status, line):
-        print('Error: trace_table_branch_prologue')
-        sys.exit(1)
+        error_message('trace_table_branch_prologue')
 
     def get_table_branch_content(self, line):
-        print('Error: get_table_branch_content')
-        sys.exit(1)
+        error_message('get_table_branch_content')
         
     def fall_through_p(self, branch_op):
         if branch_op in ['jmp', 'retq', 'ret']:
@@ -422,6 +457,9 @@ class C_x86_64__(Config):
         return op in self.control_transfer_op_dict
 
 class C_x86_64__ClangLLVM(C_x86_64__):
+    def function_exit_p(self, name, line):
+        return re.match('^\.Lfunc_end\d+:$', line)
+
     def get_table_branch_prologue_number(self):
         # .section .rodata,"a",@progbits
         # .p2align 3
@@ -444,12 +482,6 @@ class C_x86_64__ClangLLVM(C_x86_64__):
         else:
             return (False, None)
 
-    def table_branch_p(self, branch_op, branch_target):
-        if branch_op in ['jmpq'] and branch_target and branch_target[0] == '*':
-            return True
-        else:
-            return False        
-
     def get_table_branch_content(self, line):
         m = re.match('^\t\.quad\t(\.L.*)$', line)
         if m:
@@ -458,6 +490,9 @@ class C_x86_64__ClangLLVM(C_x86_64__):
         return None
 
 class C_x86_64__GCC(C_x86_64__):
+    def function_exit_p(self, name, line):
+        return re.match('^\t\.cfi_endproc', line)
+    
     def get_table_branch_prologue_number(self):
         # jmp *%r?x
 	# .section .rodata
@@ -486,12 +521,6 @@ class C_x86_64__GCC(C_x86_64__):
         else:
             return (False, None)
 
-    def table_branch_p(self, branch_op, branch_target):
-        if branch_op in ['jmp'] and branch_target and branch_target[0] == '*':
-            return True
-        else:
-            return False        
-    
     def get_table_branch_content(self, line):
         m = re.match('^\t\.long\t(\.L\d+)-\.L\d+', line)
         if m:

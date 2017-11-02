@@ -162,7 +162,7 @@ and the metric program name `kind`, the execution of HCQC is as follows:
 
 The workflow executing this command is as follows:
 
-First, hcqc opens the configuration file
+First, HCQC opens the configuration file
 
     ${INSTALL_DIRECTORY}/hcqc/config/CONFIG.json
 
@@ -841,7 +841,7 @@ The data element of the method that returns the result data needs to be a string
 
 First, HCQC creates a control flow graph of the test program.
 Then HCQC tries executing each script in order of name from the directory of the specified metric program name.
-If the method `match_p` of one script returns True, HPCQ does not execute subsequent scripts.
+If the method `match_p` of one script returns True, HCQC does not execute subsequent scripts.
 
 The Python script
 
@@ -908,9 +908,19 @@ the class `C_myarch__` can override those definitions.
 
   This method decides whether the mnemonic `branch_op` and the control transfer destination label `branch_target`(if any) represent a function call instruction.
 
-- `table_branch_p(self, branch_op, branch_target)`
+- `tail_call_p(self, branch_op, branch_target)`
+
+  This method decides whether the mnemonic `branch_op` and the control transfer destination label `branch_target`(if any) represent a tail function call instruction.
+  
+- `branch_by_register_p(self, branch_op, branch_target)`
+
+  This method decides whether the mnemonic `branch_op` and the control transfer destination label `branch_target`(if any) represent a branch by the value of a register.
+  An instruction which branches by the value of a register is either a [tail] call by a function pointer or a table branch.
+
+- `table_branch_p(self, branch_op, branch_target, table_branch_label, line_list)`
 
   This method decides whether the mnemonic `branch_op` and the control transfer destination `branch_target`(if any) represent a table branch instruction.
+  The `table_branch_label` represents a label for table branch(if any) included in the basic block currently being processed, and `line_list` represents a list of line in the basic block.
 
 - `get_table_branch_prologue_number(self)`
 
@@ -919,16 +929,16 @@ the class `C_myarch__` can override those definitions.
 - `trace_table_branch_prologue(self, region_status, line)`
 
   This method represents a process for detecting tables for table branches.
-  It determines whether to transition to the next state of the process when it reaches the line `line` when the current state number is `region_status'.
-  When transitioning to the next state, this method returns `(True, label)' as a result.
-  Here, the `label' represents the head label of the table for table branches that the line `line' contains.
-  If the line `line' does not contain the label, the `label' is None.
-  If this method does not transition to the next state, it returns `(False, None)' as a result.
+  It determines whether to transition to the next state of the process when it reaches the line `line` when the current state number is `region_status`.
+  When transitioning to the next state, this method returns `(True, label)` as a result.
+  Here, the `label` represents the head label of the table for table branches that the line `line` contains.
+  If the line `line` does not contain the label, the `label` is None.
+  If this method does not transition to the next state, it returns `(False, None)` as a result.
   
 - `get_table_branch_content(self, line)`
 
-  If any line `line' is an element of the table of the table branch, this method returns the label of the destination which the line `line' includes.
-  Otherwise, this method returns `None'.
+  If any line `line` is an element of the table of the table branch, this method returns the label of the destination which the line `line` includes.
+  Otherwise, this method returns `None`.
 
 - `fall_through_p(self, branch_op)`
 

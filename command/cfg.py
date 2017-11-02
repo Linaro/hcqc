@@ -50,7 +50,7 @@ def make_sure_last_bb(line_number, label):
         last_bb = BasicBlock(line_number, label)
         bb_list.append(last_bb)
     
-def deal_with_line(target_config, line_number, line):
+def deal_with_line(target_config, table_branch_map, line_number, line):
     global last_bb
     label = target_config.bb_label(line)
     branch_info = target_config.bb_branch(line)
@@ -69,10 +69,19 @@ def deal_with_line(target_config, line_number, line):
         last_bb.append_line(line)
         if target_config.call_p(branch_op, branch_target):
             pass
-        elif target_config.table_branch_p(branch_op, branch_target):
+        elif target_config.tail_call_p(branch_op, branch_target):
             last_bb.set_fall_through_p(False)
-            last_bb.table_bb_list = [ 'PLACE-HOLDER' ]
             last_bb = None
+        elif target_config.branch_by_register_p(branch_op, branch_target):
+            table_branch_label = find_table_branch_label(table_branch_map, last_bb)
+            if target_config.table_branch_p(branch_op, branch_target, table_branch_label, last_bb.line_list):
+                last_bb.set_fall_through_p(False)
+                last_bb.table_bb_list = [ table_branch_label ]
+                last_bb = None
+            else:
+                # This case is for tail calls using function pointers.
+                last_bb.set_fall_through_p(False)
+                last_bb = None
         elif target_config.fall_through_p(branch_op):
             if branch_target:
                 last_bb.target_label = branch_target
@@ -188,11 +197,8 @@ def link_bb(target_config, bb_list, table_branch_map):
                 error_message("cannot find bb")
             bb.target_bb = tbb
         elif bb.table_bb_list:
-            xxx = bb.table_bb_list[0]
-            if xxx != 'PLACE-HOLDER':
-                error_message("link_bb")
+            table_branch_label = bb.table_bb_list[0]
             bb.table_bb_list = []
-            table_branch_label = find_table_branch_label(target_config, table_branch_map, bb)
             label_list = table_branch_map[table_branch_label]
             for label in label_list:
                 tbb = map[label]
@@ -201,7 +207,7 @@ def link_bb(target_config, bb_list, table_branch_map):
                 bb.table_bb_list.append(tbb)
     return bb_list
 
-def find_table_branch_label(target_config, table_branch_map, bb):
+def find_table_branch_label(table_branch_map, bb):
     label_list = table_branch_map.keys()
     r_line_list = reversed(bb.line_list)
     for label in label_list:
@@ -209,7 +215,7 @@ def find_table_branch_label(target_config, table_branch_map, bb):
             index = line.find(label)
             if 0 <= index:
                 return label
-    error_message("cannot find table branch label")
+    return None
 
 def debug_print_for_bb_list(bb_list):
     for bb in bb_list:
@@ -539,10 +545,10 @@ def build_cfg(target_config, fin, function_name, table_branch_map):
             if target_config.function_entry_p(function_name, line):
                 region_status = 1
         if region_status == 1:
-            deal_with_line(target_config, line_number, line)
+            deal_with_line(target_config, table_branch_map, line_number, line)
             if target_config.function_exit_p(function_name, line):
-                region_status == 2
-    if region_status == 2:
+                region_status = 2
+    if region_status != 2:
         error_message("cannot create control flow graph")
     bb_list = link_bb(target_config, bb_list, table_branch_map)
     bb_list = cut_dead_bb(bb_list)
