@@ -16,6 +16,7 @@ class BasicBlock:
         #
         self.target_bb = None
         self.fall_through_bb = None
+        self.table_bb_list = None
         #
         self.depth = 0
 
@@ -68,6 +69,10 @@ def deal_with_line(target_config, line_number, line):
         last_bb.append_line(line)
         if target_config.call_p(branch_op, branch_target):
             pass
+        elif target_config.table_branch_p(branch_op, branch_target):
+            last_bb.set_fall_through_p(False)
+            last_bb.table_bb_list = [ 'PLACE-HOLDER' ]
+            last_bb = None
         elif target_config.fall_through_p(branch_op):
             if branch_target:
                 last_bb.target_label = branch_target
@@ -93,6 +98,9 @@ def make_previous_map(bb_list):
     for bb in bb_list:
         if bb.target_bb:
             previous_map[bb.target_bb].append(bb)
+        if bb.table_bb_list:
+            for tbb in bb.table_bb_list:
+                previous_map[tbb].append(bb)
         if last_bb and last_bb.fall_through_p:
             previous_map[bb].append(last_bb)
         last_bb = bb
@@ -106,6 +114,9 @@ def make_next_map(bb_list):
     for bb in bb_list:
         if bb.target_bb:
             next_map[bb].append(bb.target_bb)
+        if bb.table_bb_list:
+            for tbb in bb.table_bb_list:
+                next_map[bb].append(tbb)
         if last_bb and last_bb.fall_through_p:
             next_map[last_bb].append(bb)
         last_bb = bb
@@ -160,8 +171,8 @@ def cut_redundant_tail_bb(bb_list):
                 print(' cut --> ' + str(tail_bb.start_line_number))
             changed_p = True
     return bb_list
-            
-def link_bb(bb_list):
+
+def link_bb(target_config, bb_list, table_branch_map):
     previous_bb = None
     map = {}
     for bb in bb_list:
@@ -176,7 +187,29 @@ def link_bb(bb_list):
             if not tbb:
                 error_message("cannot find bb")
             bb.target_bb = tbb
+        elif bb.table_bb_list:
+            xxx = bb.table_bb_list[0]
+            if xxx != 'PLACE-HOLDER':
+                error_message("link_bb")
+            bb.table_bb_list = []
+            table_branch_label = find_table_branch_label(target_config, table_branch_map, bb)
+            label_list = table_branch_map[table_branch_label]
+            for label in label_list:
+                tbb = map[label]
+                if not tbb:
+                    error_message("cannot find bb")
+                bb.table_bb_list.append(tbb)
     return bb_list
+
+def find_table_branch_label(target_config, table_branch_map, bb):
+    label_list = table_branch_map.keys()
+    r_line_list = reversed(bb.line_list)
+    for label in label_list:
+        for line in r_line_list:
+            index = line.find(label)
+            if 0 <= index:
+                return label
+    error_message("cannot find table branch label")
 
 def debug_print_for_bb_list(bb_list):
     for bb in bb_list:
@@ -202,6 +235,9 @@ def draw_by_dot(fout, bb_list):
             print(str(line_number) + ' -> ' + str(bb.target_bb.start_line_number) + ';', file=fout)
         if bb.fall_through_bb:
             print(str(line_number) + ' -> ' + str(bb.fall_through_bb.start_line_number) + ';', file=fout)
+        if bb.table_bb_list:
+            for tbb in bb.table_bb_list:
+                print(str(line_number) + ' -> ' + str(tbb.start_line_number) + ';', file=fout)
     print('}',file=fout)
 
 ### Depth First Search
@@ -432,7 +468,7 @@ def find_end_bb(bb_list, next_map):
 def construct_natural_loop(bb_list, previous_map, next_map):
     back_edge_list = make_back_edge_list(bb_list, previous_map, next_map)
     loop_info_map = {}
-    for (src, dest) in back_edge_list: 
+    for (src, dest) in back_edge_list:
         loop_set = construct_natural_loop_sub(bb_list, previous_map, src, dest)
         if not dest in loop_info_map:
             loop_info_map[dest] = []
@@ -457,10 +493,41 @@ def construct_natural_loop_sub(bb_list, previous_map, src, dest):
                 loop_set.insert(0, p)
                 stack.insert(0, p)
     return loop_set
-        
-def build_cfg(target_config, fin, function_name):
+
+def build_table_branch_map(target_config, fin):
     global bb_list
-    in_region_p = False
+    table_branch_map = {}
+    table_branch_label = None
+    region_status = 0
+    line = None
+    while True:
+        line = fin.readline()
+        if not line:
+            break
+        if region_status == target_config.get_table_branch_prologue_number():
+            label = target_config.get_table_branch_content(line)
+            if label:
+                if not table_branch_label in table_branch_map:
+                    table_branch_map[table_branch_label] = []
+                if not label in table_branch_map[table_branch_label]:
+                    table_branch_map[table_branch_label].append(label)
+            else:
+                region_status = 0
+                table_branch_label = None
+        else:
+            (flag_p, label) = target_config.trace_table_branch_prologue(region_status, line)
+            if flag_p:
+                region_status += 1
+                if label:
+                    table_branch_label = label
+            else:
+                region_status = 0
+                table_branch_label = None
+    return table_branch_map
+
+def build_cfg(target_config, fin, function_name, table_branch_map):
+    global bb_list
+    region_status = 0
     line = None
     line_number = 0
     while True:
@@ -468,19 +535,19 @@ def build_cfg(target_config, fin, function_name):
         line_number += 1
         if not line:
             break
-        if not in_region_p:
+        if region_status == 0:
             if target_config.function_entry_p(function_name, line):
-                in_region_p = True
-        if in_region_p:
+                region_status = 1
+        if region_status == 1:
             deal_with_line(target_config, line_number, line)
             if target_config.function_exit_p(function_name, line):
-                break
-    if not in_region_p:
+                region_status == 2
+    if region_status == 2:
         error_message("cannot create control flow graph")
-    bb_list = link_bb(bb_list)
+    bb_list = link_bb(target_config, bb_list, table_branch_map)
     bb_list = cut_dead_bb(bb_list)
     bb_list = cut_redundant_tail_bb(bb_list)
-    find_depth(bb_list.copy())
+    find_depth(bb_list)
     if verbose_p:
         debug_print_for_bb_list(bb_list)
     return bb_list
@@ -498,6 +565,8 @@ def get_bb_name_pair(bb):
             ctf_name = 'cond ' + target_name
         else:
             ctf_name = 'goto ' + target_name
+    elif bb.table_bb_list:
+        ctf_name = 'table'
     else:
         if not bb.fall_through_p:
             ctf_name = 'end'
@@ -526,5 +595,7 @@ def dump_column(bb_list):
 def get_bb_list(target_config, filename, function_name):
     bb_list = None
     with open(filename, 'rt') as fin:
-        bb_list = build_cfg(target_config, fin, function_name)
+        table_branch_map = build_table_branch_map(target_config, fin)
+    with open(filename, 'rt') as fin:
+        bb_list = build_cfg(target_config, fin, function_name, table_branch_map)
     return bb_list

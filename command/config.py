@@ -1,3 +1,4 @@
+import sys
 import re
 
 verbose_p = False
@@ -193,8 +194,26 @@ class C_aarch64__(Config):
         else:
             return False
 
+    def table_branch_p(self, branch_op, branch_target):
+        if branch_op in ['br'] and branch_target and branch_target[0] == 'x':
+            return True
+        else:
+            return False
+
+    def get_table_branch_prologue_number(self):
+        print('Error: get_table_branch_prologue_number')
+        sys.exit(1)
+
+    def trace_table_branch_prologue(self, region_status, line):
+        print('Error: trace_table_branch_prologue')
+        sys.exit(1)
+
+    def get_table_branch_content(self, line):
+        print('Error: get_table_branch_content')
+        sys.exit(1)
+        
     def fall_through_p(self, branch_op):
-        if branch_op in ['b', 'br', 'ret']:
+        if branch_op in ['b', 'ret']:
             return False
         else:
             return True
@@ -216,10 +235,71 @@ class C_aarch64__(Config):
         return op in self.control_transfer_op_dict
 
 class C_aarch64__ClangLLVM(C_aarch64__):
-    pass
+    def get_table_branch_prologue_number(self):
+        # .section .rodata,"a",@progbits
+	# .p2align 3
+        # .LJTI?_?:
+	# --> .xword .LBB?_?
+        return 3
+
+    def trace_table_branch_prologue(self, region_status, line):
+        if region_status == 0 and re.match('^\t\.section\t\.rodata,"a",@progbits$', line):
+            return (True, None)
+        elif region_status == 1 and re.match("^\t\.p2align\t3$", line):
+            return (True, None)
+        elif region_status == 2:
+            m = re.match('^(?P<TBLABEL>\.LJTI\d+_\d+):$', line)
+            if m:
+                tb_label = m.group('TBLABEL')
+                return (True, tb_label)
+            else:
+                return (False, None)
+        else:
+            return (False, None)
+
+    def get_table_branch_content(self, line):
+        m = re.match('^\t\.xword\t(\.L.*)$', line)
+        if m:
+            label = m.groups()
+            return label[0]
+        else:
+            return None
 
 class C_aarch64__GCC(C_aarch64__):
-    pass
+    def get_table_branch_prologue_number(self):
+        # .Lrtx?:
+	# .section .rodata
+	# .align 0
+	# .align 2
+        # .L?:
+	# --> .word (.L? - .Lrtx?) / 4
+        return 5
+
+    def trace_table_branch_prologue(self, region_status, line):
+        if region_status == 0 and re.match('^\.Lrtx\d+:$', line):
+            return (True, None)
+        elif region_status == 1 and re.match("^\t\.section\t\.rodata$", line):
+            return (True, None)
+        elif region_status == 2 and re.match("^\t\.align\t0$", line):
+            return (True, None)
+        elif region_status == 3 and re.match("^\t\.align\t2$", line):
+            return (True, None)
+        elif region_status == 4:
+            m = re.match('^(?P<TBLABEL>\.L\d+):$', line)
+            if m:
+                tb_label = m.group('TBLABEL')
+                return (True, tb_label)
+            else:
+                return (False, None)
+        else:
+            return (False, None)
+    
+    def get_table_branch_content(self, line):
+        m = re.match('^\t\.word\t\((\.L\d+) - \.Lrtx\d+\) / 4$', line)
+        if m:
+            label = m.groups()
+            return label[0]
+        return None
 
 # TODO
 class C_x86_64__(Config):
@@ -258,6 +338,7 @@ class C_x86_64__(Config):
                                 'jnp': '',
                                 'jpo': '',
                                 'jmp': '',
+                                'jmpq': '',
                                 'call': '',
                                 'callq': '',
                                 'ret': '',
@@ -286,6 +367,14 @@ class C_x86_64__(Config):
         if m:
             tmp = m.groups()
             return tmp
+        m = re.match('^\t(jmpq)\t(\*%\w+).*', line)
+        if m:
+            tmp = m.groups()
+            return tmp
+        m = re.match('^\t(jmp)\t(\*%\w+).*', line)
+        if m:
+            tmp = m.groups()
+            return tmp
         return None
 
     def call_p(self, branch_op, branch_target):
@@ -294,6 +383,22 @@ class C_x86_64__(Config):
         else:
             return False
 
+    def table_branch_p(self, branch_op, branch_target):
+        print('Error: table_branch_p')
+        sys.exit(1)
+
+    def get_table_branch_prologue_number(self):
+        print('Error: get_table_branch_prologue_number')
+        sys.exit(1)
+
+    def trace_table_branch_prologue(self, region_status, line):
+        print('Error: trace_table_branch_prologue')
+        sys.exit(1)
+
+    def get_table_branch_content(self, line):
+        print('Error: get_table_branch_content')
+        sys.exit(1)
+        
     def fall_through_p(self, branch_op):
         if branch_op in ['jmp', 'retq', 'ret']:
             return False
@@ -316,10 +421,80 @@ class C_x86_64__(Config):
     def control_transfer_op_p(self, op):
         return op in self.control_transfer_op_dict
 
-# TODO
 class C_x86_64__ClangLLVM(C_x86_64__):
-    pass
+    def get_table_branch_prologue_number(self):
+        # .section .rodata,"a",@progbits
+        # .p2align 3
+        # .LJTI?_?:
+	# --> .quad .LBB?_?
+        return 3
+    
+    def trace_table_branch_prologue(self, region_status, line):
+        if region_status == 0 and re.match('^\t\.section\t\.rodata,"a",@progbits$', line):
+            return (True, None)
+        elif region_status == 1 and re.match("^\t\.p2align\t3$", line):
+            return (True, None)
+        elif region_status == 2:
+            m = re.match('^(?P<TBLABEL>\.LJTI\d+_\d+):$', line)
+            if m:
+                tb_label = m.group('TBLABEL')
+                return (True, tb_label)
+            else:
+                return (False, None)
+        else:
+            return (False, None)
 
-# TODO
+    def table_branch_p(self, branch_op, branch_target):
+        if branch_op in ['jmpq'] and branch_target and branch_target[0] == '*':
+            return True
+        else:
+            return False        
+
+    def get_table_branch_content(self, line):
+        m = re.match('^\t\.quad\t(\.L.*)$', line)
+        if m:
+            label = m.groups()
+            return label[0]
+        return None
+
 class C_x86_64__GCC(C_x86_64__):
-    pass
+    def get_table_branch_prologue_number(self):
+        # jmp *%r?x
+	# .section .rodata
+	# .align 4
+	# .align 4
+        # .L?:
+	# --> .long .L?-.L?
+        return 5
+    
+    def trace_table_branch_prologue(self, region_status, line):
+        if region_status == 0 and re.match('^\tjmp\t\*%r\wx.*$', line):
+            return (True, None)
+        elif region_status == 1 and re.match("^\t\.section\t\.rodata$", line):
+            return (True, None)
+        elif region_status == 2 and re.match("^\t\.align 4$", line):
+            return (True, None)
+        elif region_status == 3 and re.match("^\t\.align 4$", line):
+            return (True, None)
+        elif region_status == 4:
+            m = re.match('^(?P<TBLABEL>\.L\d+):$', line)
+            if m:
+                tb_label = m.group('TBLABEL')
+                return (True, tb_label)
+            else:
+                return (False, None)
+        else:
+            return (False, None)
+
+    def table_branch_p(self, branch_op, branch_target):
+        if branch_op in ['jmp'] and branch_target and branch_target[0] == '*':
+            return True
+        else:
+            return False        
+    
+    def get_table_branch_content(self, line):
+        m = re.match('^\t\.long\t(\.L\d+)-\.L\d+', line)
+        if m:
+            label = m.groups()
+            return label[0]
+        return None

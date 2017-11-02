@@ -908,6 +908,28 @@ the class `C_myarch__` can override those definitions.
 
   This method decides whether the mnemonic `branch_op` and the control transfer destination label `branch_target`(if any) represent a function call instruction.
 
+- `table_branch_p(self, branch_op, branch_target)`
+
+  This method decides whether the mnemonic `branch_op` and the control transfer destination `branch_target`(if any) represent a table branch instruction.
+
+- `get_table_branch_prologue_number(self)`
+
+  This method returns the number of lines(or states) necessary for detecting tables for table branches from the assembly code.
+
+- `trace_table_branch_prologue(self, region_status, line)`
+
+  This method represents a process for detecting tables for table branches.
+  It determines whether to transition to the next state of the process when it reaches the line `line` when the current state number is `region_status'.
+  When transitioning to the next state, this method returns `(True, label)' as a result.
+  Here, the `label' represents the head label of the table for table branches that the line `line' contains.
+  If the line `line' does not contain the label, the `label' is None.
+  If this method does not transition to the next state, it returns `(False, None)' as a result.
+  
+- `get_table_branch_content(self, line)`
+
+  If any line `line' is an element of the table of the table branch, this method returns the label of the destination which the line `line' includes.
+  Otherwise, this method returns `None'.
+
 - `fall_through_p(self, branch_op)`
 
   This method decides whether the mnemonic `branch_op` of control transfer instructions falls through the next basic block.
@@ -966,7 +988,7 @@ For example, you can generate a control flow graph for the assembly code as foll
 
 ## Known Bugs
 
-Currently, HCQC cannot handle the assembly code with table branches or function calls by function pointers.
+Currently, HCQC cannot handle infinite loops.
 
 ## Future Work
 
