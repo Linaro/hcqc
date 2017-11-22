@@ -1,0 +1,12 @@
+{
+    "LANGUAGE" : "C",
+    "MAIN_FLAGS" : ["?DEBUG_FLAG", "?C99_STANDARD"],
+    "KERNEL_FLAGS" : ["?C99_STANDARD"],
+    "LINK_FLAGS" : ["?C99_STANDARD"],    
+    "LIB_LIST" : [],
+    "MAIN_FILENAME" : "main.c",
+    "KERNEL_FILENAME" : "kernel.c",
+    "KERNEL_FUNCTION_NAME" : "calculateNewPfMTwo_child",
+    "INPUT" : [ "NONE", "NONE" ],
+    "OUTPUT" : [ "NONE", "NONE" ]
+}
