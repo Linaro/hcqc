@@ -12,18 +12,19 @@ def get_opmap(target_config, bb):
             continue
         if branch_info:
             branch_op = branch_info[0]
-            add_entry(opmap, branch_op)
+            add_entry(target_config, opmap, branch_op)
             continue
         if op:
-            add_entry(opmap, op)
+            add_entry(target_config, opmap, op)
             continue
     return opmap
 
-def add_entry(opmap, op):
-    if op in opmap:
-        opmap[op] += 1
+def add_entry(target_config, opmap, op):
+    canonical_op = target_config.canonical_op(op)
+    if canonical_op in opmap:
+        opmap[canonical_op] += 1
     else:
-        opmap[op] = 1
+        opmap[canonical_op] = 1
 
 all_op_list = []
 bb_to_opmap = {}

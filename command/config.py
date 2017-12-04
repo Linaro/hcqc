@@ -44,120 +44,130 @@ def make_target_config(distribution, arch, cpu, compiler, version):
     target_config = cls(distribution, arch, cpu, compiler, version)
     return target_config
 
+def get_canonical_op(op_dict, op):
+    if op in op_dict:
+        canonical_op = op_dict[op]
+        if canonical_op:
+            return canonical_op
+        else:
+            return op
+    else:
+        return None
+
 class C_aarch64__(Config):
-    load_op_dict = {'ldr': '',
-                    'ldrb': '',
-                    'ldrsb': '',
-                    'ldrh': '',
-                    'ldrsh': '',
-                    'ldrsw': '',
-                    'ldur': '',
-                    'ldurb': '',
-                    'ldursb': '',
-                    'ldurh': '',
-                    'ldursh': '',
-                    'ldursw': '',
-                    'ldp': '',
-                    'ldpsw': '',
-                    'ldnp': '',
-                    'ldtr': '',
-                    'ldtrb': '',
-                    'ldtrsb': '',
-                    'ldtrh': '',
-                    'ldtrsh': '',
-                    'ldtrsw': '',
-                    'ldxr': '',
-                    'ldxrb': '',
-                    'ldxrh': '',
-                    'ldxp': '',
-                    'ldar': '',
-                    'ldarb': '',
-                    'ldarh': '',
-                    'ldaxr': '',
-                    'ldaxrb': '',
-                    'ldaxrh': '',
-                    'ldaxp': '',
-                    'ld1': '',
-                    'ld2': '',
-                    'ld3': '',
-                    'ld4': '',
-                    'ld1r': '',
-                    'ld2r': '',
-                    'ld3r': '',
-                    'ld4r': ''}
+    load_op_dict = {'ldr': None,
+                    'ldrb': None,
+                    'ldrsb': None,
+                    'ldrh': None,
+                    'ldrsh': None,
+                    'ldrsw': None,
+                    'ldur': None,
+                    'ldurb': None,
+                    'ldursb': None,
+                    'ldurh': None,
+                    'ldursh': None,
+                    'ldursw': None,
+                    'ldp': None,
+                    'ldpsw': None,
+                    'ldnp': None,
+                    'ldtr': None,
+                    'ldtrb': None,
+                    'ldtrsb': None,
+                    'ldtrh': None,
+                    'ldtrsh': None,
+                    'ldtrsw': None,
+                    'ldxr': None,
+                    'ldxrb': None,
+                    'ldxrh': None,
+                    'ldxp': None,
+                    'ldar': None,
+                    'ldarb': None,
+                    'ldarh': None,
+                    'ldaxr': None,
+                    'ldaxrb': None,
+                    'ldaxrh': None,
+                    'ldaxp': None,
+                    'ld1': None,
+                    'ld2': None,
+                    'ld3': None,
+                    'ld4': None,
+                    'ld1r': None,
+                    'ld2r': None,
+                    'ld3r': None,
+                    'ld4r': None}
 
-    store_op_dict = {'str': '',
-                     'strb': '',
-                     'strh': '',
-                     'stur': '',
-                     'sturb': '',
-                     'sturh': '',
-                     'stp': '',
-                     'stnp': '',
-                     'sttr': '',
-                     'sttrb': '',
-                     'sttrh': '',
-                     'stxr': '',
-                     'stxrb': '',
-                     'stxrh': '',
-                     'stxp': '',
-                     'stlr': '',
-                     'stlrb': '',
-                     'stlrh': '',
-                     'stlxr': '',
-                     'stlxrb': '',
-                     'stlxrh': '',
-                     'stlxp': '',
-                     'st1': '',
-                     'st2': '',
-                     'st3': '',
-                     'st4': ''}
+    store_op_dict = {'str': None,
+                     'strb': None,
+                     'strh': None,
+                     'stur': None,
+                     'sturb': None,
+                     'sturh': None,
+                     'stp': None,
+                     'stnp': None,
+                     'sttr': None,
+                     'sttrb': None,
+                     'sttrh': None,
+                     'stxr': None,
+                     'stxrb': None,
+                     'stxrh': None,
+                     'stxp': None,
+                     'stlr': None,
+                     'stlrb': None,
+                     'stlrh': None,
+                     'stlxr': None,
+                     'stlxrb': None,
+                     'stlxrh': None,
+                     'stlxp': None,
+                     'st1': None,
+                     'st2': None,
+                     'st3': None,
+                     'st4': None}
 
-    control_transfer_op_dict = {'beq': '',
-                                'bne': '',
-                                'bcs': '',
-                                'bhs': '',
-                                'bcc': '',
-                                'blo': '',
-                                'bmi': '',
-                                'bpl': '',
-                                'bvs': '',
-                                'bvc': '',
-                                'bhi': '',
-                                'bls': '',
-                                'bge': '',
-                                'blt': '',
-                                'bgt': '',
-                                'ble': '',
-                                'bal': '',
-                                'bnv': '',
-                                'b.eq': '',
-                                'b.ne': '',
-                                'b.cs': '',
-                                'b.hs': '',
-                                'b.cc': '',
-                                'b.lo': '',
-                                'b.mi': '',
-                                'b.pl': '',
-                                'b.vs': '',
-                                'b.vc': '',
-                                'b.hi': '',
-                                'b.ls': '',
-                                'b.ge': '',
-                                'b.lt': '',
-                                'b.gt': '',
-                                'b.le': '',
-                                'b.al': '',
-                                'b.nv': '',
-                                'cbnz': '',
-                                'cbz': '',
-                                'tbnz': '',
-                                'tbz': '',
-                                'b': '',
-                                'bl': '',
-                                'blr': '',
-                                'br': '',
-                                'ret': ''}
+    control_transfer_op_dict = {'beq': 'b.eq',
+                                'bne': 'b.ne',
+                                'bcs': 'b.cs',
+                                'bhs': 'b.hs',
+                                'bcc': 'b.cc',
+                                'blo': 'b.lo',
+                                'bmi': 'b.mi',
+                                'bpl': 'b.pl',
+                                'bvs': 'b.vs',
+                                'bvc': 'b.vc',
+                                'bhi': 'b.hi',
+                                'bls': 'b.ls',
+                                'bge': 'b.ge',
+                                'blt': 'b.lt',
+                                'bgt': 'b.gt',
+                                'ble': 'b.le',
+                                'bal': 'b.al',
+                                'bnv': 'b.nv',
+                                'b.eq': None,
+                                'b.ne': None,
+                                'b.cs': None,
+                                'b.hs': None,
+                                'b.cc': None,
+                                'b.lo': None,
+                                'b.mi': None,
+                                'b.pl': None,
+                                'b.vs': None,
+                                'b.vc': None,
+                                'b.hi': None,
+                                'b.ls': None,
+                                'b.ge': None,
+                                'b.lt': None,
+                                'b.gt': None,
+                                'b.le': None,
+                                'b.al': None,
+                                'b.nv': None,
+                                'cbnz': None,
+                                'cbz': None,
+                                'tbnz': None,
+                                'tbz': None,
+                                'b': None,
+                                'bl': None,
+                                'blr': None,
+                                'br': None,
+                                'ret': None}
 
     def get_asm_comment(self, line):
         pattern = '//'
@@ -230,7 +240,7 @@ class C_aarch64__(Config):
         error_message('get_table_branch_content')
 
     def fall_through_p(self, branch_op):
-        if branch_op in ['b', 'ret']:
+        if branch_op in ['b', 'ret', 'bal', 'b.al', 'bnv', 'b.nv']:
             return False
         else:
             return True
@@ -250,6 +260,18 @@ class C_aarch64__(Config):
 
     def control_transfer_op_p(self, op):
         return op in self.control_transfer_op_dict
+
+    def canonical_op(self, op):
+        cop = get_canonical_op(self.load_op_dict, op)
+        if cop:
+            return cop
+        cop = get_canonical_op(self.store_op_dict, op)
+        if cop:
+            return cop
+        cop = get_canonical_op(self.control_transfer_op_dict, op)
+        if cop:
+            return cop
+        return op
 
 class C_aarch64__ClangLLVM(C_aarch64__):
     def function_exit_p(self, name, line):
@@ -327,42 +349,42 @@ class C_x86_64__(Config):
 
     store_op_dict = {}
 
-    control_transfer_op_dict = {'ja': '',
-                                'jnbe': '',
-                                'jae': '',
-                                'jnb': '',
-                                'jb': '',
-                                'jnae': '',
-                                'jbe': '',
-                                'jna': '',
-                                'je': '',
-                                'jz': '',
-                                'jne': '',
-                                'jnz': '',
-                                'jg': '',
-                                'jnle': '',
-                                'jge': '',
-                                'jnl': '',
-                                'jl': '',
-                                'jnge': '',
-                                'jle': '',
-                                'jng': '',
-                                'js': '',
-                                'jns': '',
-                                'jc': '',
-                                'jnc': '',
-                                'jo': '',
-                                'jno': '',
-                                'jp': '',
-                                'jpe': '',
-                                'jnp': '',
-                                'jpo': '',
-                                'jmp': '',
-                                'jmpq': '',
-                                'call': '',
-                                'callq': '',
-                                'ret': '',
-                                'retq': ''}
+    control_transfer_op_dict = {'ja': None,
+                                'jnbe': None,
+                                'jae': None,
+                                'jnb': None,
+                                'jb': None,
+                                'jnae': None,
+                                'jbe': None,
+                                'jna': None,
+                                'je': None,
+                                'jz': None,
+                                'jne': None,
+                                'jnz': None,
+                                'jg': None,
+                                'jnle': None,
+                                'jge': None,
+                                'jnl': None,
+                                'jl': None,
+                                'jnge': None,
+                                'jle': None,
+                                'jng': None,
+                                'js': None,
+                                'jns': None,
+                                'jc': None,
+                                'jnc': None,
+                                'jo': None,
+                                'jno': None,
+                                'jp': None,
+                                'jpe': None,
+                                'jnp': None,
+                                'jpo': None,
+                                'jmp': None,
+                                'jmpq': None,
+                                'call': None,
+                                'callq': None,
+                                'ret': None,
+                                'retq': None}
 
     def get_asm_comment(self, line):
         pattern = '#'
@@ -455,6 +477,9 @@ class C_x86_64__(Config):
 
     def control_transfer_op_p(self, op):
         return op in self.control_transfer_op_dict
+
+    def canonical_op(self, op):
+        return op
 
 class C_x86_64__ClangLLVM(C_x86_64__):
     def function_exit_p(self, name, line):
