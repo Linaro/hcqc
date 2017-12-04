@@ -27,7 +27,7 @@ def add_entry(kindmap, kind):
 all_kind_list = [ 'memory', 'branch', 'other']
 bb_to_kindmap = {}
 summary_kindmap = { 'memory' : 0, 'branch' : 0, 'other' : 0 }
-        
+
 def make_all_kindmap(target_config, bb_list):
     global bb_to_kindmap
     global summary_kindmap

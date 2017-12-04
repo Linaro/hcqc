@@ -8,7 +8,7 @@ import driver
 def find_class(module):
     for name, member in inspect.getmembers(module):
         if inspect.isclass(member) and issubclass(member, driver.MetricWorker):
-            print ('MetricWorker : ' + name)
+            print('MetricWorker : ' + name)
             return member
     return None
 
@@ -23,7 +23,7 @@ def test_metric(target_config, metric_filename, asm_filename, function_name, db_
 
 def usage():
     driver.error_message('Usage: python3 test-metric.py metric arch compiler version asm-filename kernel-function-name db-filename')
-    
+
 def call_test_metric(arg_list):
     size = len(arg_list)
     if size != 8:

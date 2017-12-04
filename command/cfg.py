@@ -13,11 +13,9 @@ class BasicBlock:
         self.line_list = []
         self.fall_through_p = True
         self.target_label = None
-        #
         self.target_bb = None
         self.fall_through_bb = None
         self.table_bb_list = None
-        #
         self.depth = 0
 
     def append_line(self, line):
@@ -49,7 +47,7 @@ def make_sure_last_bb(line_number, label):
     if not last_bb:
         last_bb = BasicBlock(line_number, label)
         bb_list.append(last_bb)
-    
+
 def deal_with_line(target_config, table_branch_map, line_number, line):
     global last_bb
     label = target_config.bb_label(line)
@@ -109,9 +107,11 @@ def make_previous_map(bb_list):
             previous_map[bb.target_bb].append(bb)
         if bb.table_bb_list:
             for tbb in bb.table_bb_list:
-                previous_map[tbb].append(bb)
+                if not (bb in previous_map[tbb]):
+                    previous_map[tbb].append(bb)
         if last_bb and last_bb.fall_through_p:
-            previous_map[bb].append(last_bb)
+            if not (last_bb in previous_map[bb]):
+                previous_map[bb].append(last_bb)
         last_bb = bb
     return previous_map
 
@@ -125,9 +125,11 @@ def make_next_map(bb_list):
             next_map[bb].append(bb.target_bb)
         if bb.table_bb_list:
             for tbb in bb.table_bb_list:
-                next_map[bb].append(tbb)
+                if not (tbb in next_map[bb]):
+                    next_map[bb].append(tbb)
         if last_bb and last_bb.fall_through_p:
-            next_map[last_bb].append(bb)
+            if not (bb in next_map[last_bb]):
+                next_map[last_bb].append(bb)
         last_bb = bb
     return next_map
 
@@ -154,13 +156,13 @@ def make_reachable_map(bb_list):
 
 def cut_dead_bb(bb_list):
     global verbose_p
-    fix_bb_list = [] 
+    fix_bb_list = []
     reachable_map = make_reachable_map(bb_list)
     for bb in bb_list:
         if reachable_map[bb]:
             fix_bb_list.append(bb)
     return fix_bb_list
-            
+
 def cut_redundant_tail_bb(bb_list):
     global verbose_p
     reachable_map = make_reachable_map(bb_list)
@@ -219,10 +221,10 @@ def find_table_branch_label(table_branch_map, bb):
 
 def debug_print_for_bb_list(bb_list):
     for bb in bb_list:
-        n = bb.label
+        label = bb.label
         if not n:
-            n = ''
-        print('BB(' + str(bb.start_line_number) + ':' + n + ')')
+            label = ''
+        print('BB(' + str(bb.start_line_number) + ':' + label + ')')
         for x in bb.line_list:
             print('  ' + x[:-1])
 
@@ -230,20 +232,22 @@ def draw_by_dot(fout, bb_list):
     print('digraph CFG {', file=fout)
     for bb in bb_list:
         line_number = bb.start_line_number
+        id = str(line_number)
         label = bb.label
         depth = bb.depth
         if not label:
             label = ''
-        print(str(line_number) + ' [label="' + str(line_number) + ':' + label + ':' + str(depth) + '"];', file=fout)
+        print(id + ' [label="' + id + ':' + label + ':' + str(depth) + '"];', file=fout)
     for bb in bb_list:
-        line_number = bb.start_line_number        
+        line_number = bb.start_line_number
+        id = str(line_number)
         if bb.target_bb:
-            print(str(line_number) + ' -> ' + str(bb.target_bb.start_line_number) + ';', file=fout)
+            print(id + ' -> ' + str(bb.target_bb.start_line_number) + ';', file=fout)
         if bb.fall_through_bb:
-            print(str(line_number) + ' -> ' + str(bb.fall_through_bb.start_line_number) + ';', file=fout)
+            print(id + ' -> ' + str(bb.fall_through_bb.start_line_number) + ';', file=fout)
         if bb.table_bb_list:
             for tbb in bb.table_bb_list:
-                print(str(line_number) + ' -> ' + str(tbb.start_line_number) + ';', file=fout)
+                print(id + ' -> ' + str(tbb.start_line_number) + ';', file=fout)
     print('}',file=fout)
 
 ### Depth First Search
@@ -255,7 +259,7 @@ def white_p(status_map, bb):
         return True
     else:
         return False
-    
+
 def gray_p(status_map, bb):
     if status_map[bb][0] is not None and status_map[bb][1] is None:
         return True
@@ -266,8 +270,8 @@ def black_p(status_map, bb):
     if status_map[bb][0] is not None and status_map[bb][1] is not None:
         return True
     else:
-        return False    
-    
+        return False
+
 def paint_gray(status_map, bb):
     global current_time
     if not white_p(status_map, bb):
@@ -280,7 +284,7 @@ def paint_black(status_map, bb):
     if not gray_p(status_map, bb):
         error_message("paint_black")
     status_map[bb][1] = current_time
-    current_time += 1    
+    current_time += 1
 
 def depth_first_search(next_map, status_map, tree_edge_map, bb):
     paint_gray(status_map, bb)
@@ -293,7 +297,6 @@ def depth_first_search(next_map, status_map, tree_edge_map, bb):
     paint_black(status_map, bb)
 
 def find_depth(bb_list):
-    global verbose_p
     previous_map = make_previous_map(bb_list)
     next_map = make_next_map(bb_list)
     find_depth_main(bb_list, previous_map, next_map)
@@ -406,7 +409,7 @@ def dump_tree(bb_list, tree):
                 print(str(mmm[bb]) + ' -> ' + str(mmm[nbb]) + ';')
     print('}')
 
-def dominator_init (bb_list, previous_map, next_map, start_bb):
+def dominator_init(bb_list, previous_map, next_map, start_bb):
     global current_time
     status_map = {}
     tree_edge_map = {}
@@ -459,7 +462,7 @@ def get_parent(tree, v):
         return prev_list[0]
     else:
         error_message("get_parent")
-    
+
 def find_end_bb(bb_list, next_map):
     end_bb = None
     for bb in bb_list:
@@ -501,7 +504,6 @@ def construct_natural_loop_sub(bb_list, previous_map, src, dest):
     return loop_set
 
 def build_table_branch_map(target_config, fin):
-    global bb_list
     table_branch_map = {}
     table_branch_label = None
     region_status = 0
@@ -533,6 +535,9 @@ def build_table_branch_map(target_config, fin):
 
 def build_cfg(target_config, fin, function_name, table_branch_map):
     global bb_list
+    global last_bb
+    bb_list = []
+    last_bb = None
     region_status = 0
     line = None
     line_number = 0

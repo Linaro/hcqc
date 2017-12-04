@@ -14,7 +14,7 @@ class Config():
         self.cpu = cpu
         self.compiler = compiler
         self.version = version
-        
+
     def function_entry_p(self, name, line):
         return re.match('^' + name + ':', line)
 
@@ -36,12 +36,12 @@ def strcls(class_name):
     global_symbol_table = globals()
     return global_symbol_table[class_name]
 
-def make_target_config(distribution, arch, cpu, xcompiler, version):
+def make_target_config(distribution, arch, cpu, compiler, version):
     global verbose_p
-    cls = strcls('C_' + arch + '__' + xcompiler)
+    cls = strcls('C_' + arch + '__' + compiler)
     if verbose_p:
         print(cls)
-    target_config = cls(distribution, arch, cpu, xcompiler, version)
+    target_config = cls(distribution, arch, cpu, compiler, version)
     return target_config
 
 class C_aarch64__(Config):
@@ -185,7 +185,7 @@ class C_aarch64__(Config):
         m = re.match('^\t(cbn?z)\t[^,]+,\s(\.?[_\w\d]+).*', line)
         if m:
             tmp = m.groups()
-            return tmp        
+            return tmp
         m = re.match('^\t(tbn?z)\t[^,]+,[^,]+,\s(\.?[_\w\d]+).*', line)
         if m:
             tmp = m.groups()
@@ -228,7 +228,7 @@ class C_aarch64__(Config):
 
     def get_table_branch_content(self, line):
         error_message('get_table_branch_content')
-        
+
     def fall_through_p(self, branch_op):
         if branch_op in ['b', 'ret']:
             return False
@@ -313,7 +313,7 @@ class C_aarch64__GCC(C_aarch64__):
                 return (False, None)
         else:
             return (False, None)
-    
+
     def get_table_branch_content(self, line):
         m = re.match('^\t\.word\t\((\.L\d+) - \.Lrtx\d+\) / 4$', line)
         if m:
@@ -326,7 +326,7 @@ class C_x86_64__(Config):
     load_op_dict = {}
 
     store_op_dict = {}
-    
+
     control_transfer_op_dict = {'ja': '',
                                 'jnbe': '',
                                 'jae': '',
@@ -418,7 +418,7 @@ class C_x86_64__(Config):
     def table_branch_p(self, branch_op, branch_target, table_branch_label, line_list):
         if branch_op in ['jmp', 'jmpq'] and branch_target and branch_target[0] == '*':
             pass
-        else: 
+        else:
            error_message('table_branch_p')
         if table_branch_label:
             return True
@@ -433,7 +433,7 @@ class C_x86_64__(Config):
 
     def get_table_branch_content(self, line):
         error_message('get_table_branch_content')
-        
+
     def fall_through_p(self, branch_op):
         if branch_op in ['jmp', 'retq', 'ret']:
             return False
@@ -466,7 +466,7 @@ class C_x86_64__ClangLLVM(C_x86_64__):
         # .LJTI?_?:
 	# --> .quad .LBB?_?
         return 3
-    
+
     def trace_table_branch_prologue(self, region_status, line):
         if region_status == 0 and re.match('^\t\.section\t\.rodata,"a",@progbits$', line):
             return (True, None)
@@ -492,7 +492,7 @@ class C_x86_64__ClangLLVM(C_x86_64__):
 class C_x86_64__GCC(C_x86_64__):
     def function_exit_p(self, name, line):
         return re.match('^\t\.cfi_endproc', line)
-    
+
     def get_table_branch_prologue_number(self):
         # jmp *%r?x
 	# .section .rodata
@@ -501,7 +501,7 @@ class C_x86_64__GCC(C_x86_64__):
         # .L?:
 	# --> .long .L?-.L?
         return 5
-    
+
     def trace_table_branch_prologue(self, region_status, line):
         if region_status == 0 and re.match('^\tjmp\t\*%r\wx.*$', line):
             return (True, None)

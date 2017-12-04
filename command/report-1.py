@@ -83,7 +83,7 @@ def report1_entry(arg_list):
         usage()
     index = 1
     root_dir = arg_list[index]
-    index += 1    
+    index += 1
     if arg_list[index] == '--v':
         verbose_p = True
         index += 1

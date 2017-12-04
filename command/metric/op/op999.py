@@ -28,7 +28,7 @@ def add_entry(opmap, op):
 all_op_list = []
 bb_to_opmap = {}
 summary_opmap = {}
-        
+
 def make_all_opmap(target_config, bb_list):
     global bb_to_opmap
     global all_op_list

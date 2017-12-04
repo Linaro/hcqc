@@ -19,7 +19,7 @@ def load_instruction_p(target_config, line):
 def store_instruction_p(target_config, line):
     op = target_config.op(line)
     return target_config.store_op_p(op)
-    
+
 def spill_in_p(target_config, line):
     return refer_spill_slot_p(target_config, line) and load_instruction_p(target_config, line)
 
