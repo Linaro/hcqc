@@ -1,5 +1,7 @@
 import sys
 
+import graph
+
 verbose_p = False
 
 last_bb = None
@@ -222,7 +224,7 @@ def find_table_branch_label(table_branch_map, bb):
 def debug_print_for_bb_list(bb_list):
     for bb in bb_list:
         label = bb.label
-        if not n:
+        if not label:
             label = ''
         print('BB(' + str(bb.start_line_number) + ':' + label + ')')
         for x in bb.line_list:
@@ -250,52 +252,6 @@ def draw_by_dot(fout, bb_list):
                 print(id + ' -> ' + str(tbb.start_line_number) + ';', file=fout)
     print('}',file=fout)
 
-### Depth First Search
-
-current_time = None
-
-def white_p(status_map, bb):
-    if status_map[bb][0] is None and status_map[bb][1] is None:
-        return True
-    else:
-        return False
-
-def gray_p(status_map, bb):
-    if status_map[bb][0] is not None and status_map[bb][1] is None:
-        return True
-    else:
-        return False
-
-def black_p(status_map, bb):
-    if status_map[bb][0] is not None and status_map[bb][1] is not None:
-        return True
-    else:
-        return False
-
-def paint_gray(status_map, bb):
-    global current_time
-    if not white_p(status_map, bb):
-        error_message("paint_gray")
-    status_map[bb][0] = current_time
-    current_time += 1
-
-def paint_black(status_map, bb):
-    global current_time
-    if not gray_p(status_map, bb):
-        error_message("paint_black")
-    status_map[bb][1] = current_time
-    current_time += 1
-
-def depth_first_search(next_map, status_map, tree_edge_map, bb):
-    paint_gray(status_map, bb)
-    next_bb_list = next_map[bb]
-    for next_bb in next_bb_list:
-        if white_p(status_map, next_bb):
-            # tree_edge_map : dest -> src
-            tree_edge_map[next_bb].append(bb)
-            depth_first_search(next_map, status_map, tree_edge_map, next_bb)
-    paint_black(status_map, bb)
-
 def find_depth(bb_list):
     previous_map = make_previous_map(bb_list)
     next_map = make_next_map(bb_list)
@@ -313,79 +269,14 @@ def find_depth_main(bb_list, previous_map, next_map):
             bb.depth += 1
 
 def make_back_edge_list(bb_list, previous_map, next_map):
-    dominator_tree = make_dominator_tree(bb_list, previous_map, next_map)
+    dominator_tree = graph.make_dominator_tree(bb_list, previous_map, next_map)
+    #dump_tree(bb_list, dominator_tree)
     back_edge_list = []
     for src in bb_list:
         for dest in next_map[src]:
-            if dominate_p(dominator_tree, dest, src):
+            if graph.dominate_p(dominator_tree, dest, src):
                 back_edge_list.append((src, dest))
     return back_edge_list
-
-def dominate_p(dominator_tree, x, y):
-    p = y
-    while p != None:
-        p = get_parent(dominator_tree, p)
-        if p == x:
-            return True
-    return False
-
-def make_dominator_tree(bb_list, previous_map, next_map):
-    start_bb = bb_list[0]
-    (dfs_vector, spanning_tree) = dominator_init(bb_list, previous_map, next_map, start_bb)
-    semi_map = {}
-    bucket_map = {}
-    label_map = {}
-    ancestor_map = {}
-    idom_map = {}
-    dfs_number = 0
-    for v in dfs_vector:
-        semi_map[v] = dfs_number
-        label_map[v] = v
-        bucket_map[v] = []
-        ancestor_map[v] = None
-        idom_map[v] = None
-        dfs_number += 1
-    dfs_number = len(dfs_vector) - 1
-    while dfs_number != 0:
-        w = dfs_vector[dfs_number]
-        # Step 2
-        for v in previous_map[w]:
-            u = dominator_eval(semi_map, label_map, ancestor_map, v)
-            if semi_map[u] < semi_map[w]:
-                semi_map[w] = semi_map[u]
-        bucket_map[dfs_vector[semi_map[w]]].insert(0, w)
-        dominator_link(ancestor_map, get_parent(spanning_tree, w), w)
-        # Step 3
-        v_list = bucket_map[get_parent(spanning_tree, w)]
-        for v in v_list:
-            u = dominator_eval(semi_map, label_map, ancestor_map, v)
-            if semi_map[u] < semi_map[v]:
-                idom_map[v] = u
-            else:
-                idom_map[v] = get_parent(spanning_tree, w)
-        bucket_map[get_parent(spanning_tree, w)] = []
-        dfs_number -= 1
-    # Step 4
-    dfs_number = 1
-    while dfs_number < len(dfs_vector):
-        w = dfs_vector[dfs_number]
-        if idom_map[w] != dfs_vector[semi_map[w]]:
-            idom_map[w] = idom_map[idom_map[w]]
-        dfs_number += 1
-    idom_map[start_bb] = None
-    dominator_tree = {}
-    for bb in bb_list:
-        dominator_tree[bb] = []
-    for bb in bb_list:
-        idom = idom_map[bb]
-        if idom:
-            # dominator_tree : bb -> dom
-            add_edge(dominator_tree, bb, idom)
-        else:
-            if bb != start_bb:
-                error_message("make_dominator_tree")
-    #dump_tree(bb_list, dominator_tree)
-    return dominator_tree
 
 def dump_tree(bb_list, tree):
     print('digraph CFG {')
@@ -408,71 +299,6 @@ def dump_tree(bb_list, tree):
             for nbb in next_bb_list:
                 print(str(mmm[bb]) + ' -> ' + str(mmm[nbb]) + ';')
     print('}')
-
-def dominator_init(bb_list, previous_map, next_map, start_bb):
-    global current_time
-    status_map = {}
-    tree_edge_map = {}
-    for bb in bb_list:
-        status_map[bb] = [ None, None ]
-        tree_edge_map[bb] = []
-    current_time = 0
-    depth_first_search(next_map, status_map, tree_edge_map, start_bb)
-    for bb in bb_list:
-        if not black_p(status_map, bb):
-            error_message("dominator_init")
-    pair_vector = []
-    for bb in bb_list:
-        dt = status_map[bb][0]
-        pair_vector.append((dt, bb))
-    pair_vector = sorted(pair_vector, key=lambda x: x[0])
-    dfs_vector = []
-    for (n, bb) in pair_vector:
-        dfs_vector.append(bb)
-    return (dfs_vector, tree_edge_map)
-
-def dominator_eval(semi_map, label_map, ancestor_map, v):
-    a = ancestor_map[v]
-    if a:
-        dominator_compress(semi_map, label_map, ancestor_map, v)
-        return label_map[v]
-    else:
-        return v
-
-def dominator_compress(semi_map, label_map, ancestor_map, v):
-    a = ancestor_map[ancestor_map[v]]
-    if a:
-        dominator_compress(semi_map, label_map, ancestor_map, ancestor_map[v])
-        if semi_map[label_map[ancestor_map[v]]] < semi_map[label_map[v]]:
-            label_map[v] = label_map[ancestor_map[v]]
-        ancestor_map[v] = ancestor_map[ancestor_map[v]]
-
-def dominator_link(ancestor_map, v, w):
-    ancestor_map[w] = v
-
-def add_edge(map, src, dest):
-    if not dest in map[src]:
-        map[src].append(dest)
-
-def get_parent(tree, v):
-    prev_list = tree[v]
-    if len(prev_list) == 0:
-        return None
-    elif len(prev_list) == 1:
-        return prev_list[0]
-    else:
-        error_message("get_parent")
-
-def find_end_bb(bb_list, next_map):
-    end_bb = None
-    for bb in bb_list:
-        if len(next_map[bb]) == 0:
-            if end_bb != None:
-                error_message("find_end_bb")
-            end_bb = bb
-    if end_bb == None:
-        error_message("find_end_bb")
-    return end_bb
 
 def construct_natural_loop(bb_list, previous_map, next_map):
     back_edge_list = make_back_edge_list(bb_list, previous_map, next_map)
