@@ -1,4 +1,5 @@
 import sys
+import re
 
 import graph
 
@@ -213,11 +214,13 @@ def link_bb(target_config, bb_list, table_branch_map):
 
 def find_table_branch_label(table_branch_map, bb):
     label_list = table_branch_map.keys()
-    r_line_list = reversed(bb.line_list)
+    r_line_list = bb.line_list.copy()
+    r_line_list.reverse()
     for label in label_list:
+        pattern = '\\' + label + r'[^\w\d]+'
         for line in r_line_list:
-            index = line.find(label)
-            if 0 <= index:
+            m = re.search(pattern, line)
+            if m:
                 return label
     return None
 
