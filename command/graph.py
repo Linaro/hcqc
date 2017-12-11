@@ -55,7 +55,7 @@ def depth_first_search(next_map, status_map, tree_edge_map, v):
     paint_black(status_map, v)
 
 ### Dominator
-    
+
 def dominate_p(dominator_tree, x, y):
     p = y
     while p != None:

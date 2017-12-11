@@ -307,7 +307,7 @@ def work_by_compiler(root_dir, config_name, test_name, metric_name):
     flag_db_map = make_flag_db_map(config_data)
     src_dir = root_dir + "test-program/" + test_name + "/"
     pfilename = src_dir + 'program-info.json'
-    program_info = load_program_info_file(pfilename)    
+    program_info = load_program_info_file(pfilename)
     work_dir0 = root_dir + "work/" + test_name + "/"
     sure_to_exist(work_dir0)
     work_dir1 = work_dir0 + config_name + "/"
