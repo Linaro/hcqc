@@ -27,6 +27,9 @@ class BasicBlock:
     def set_fall_through_p(self, bool):
         self.fall_through_p = bool
 
+    def get_size(self):
+        return len(self.line_list)
+
 def error_message(message):
     print('Error: ' + message + '\n')
     sys.exit(1)
@@ -239,10 +242,11 @@ def draw_by_dot(fout, bb_list):
         line_number = bb.start_line_number
         id = str(line_number)
         label = bb.label
+        size = bb.get_size()
         depth = bb.depth
         if not label:
             label = ''
-        print(id + ' [label="' + id + ':' + label + ':' + str(depth) + '"];', file=fout)
+        print(id + ' [label="' + id + ':[' + label + ']:' + str(size) + ':' + str(depth) + '"];', file=fout)
     for bb in bb_list:
         line_number = bb.start_line_number
         id = str(line_number)
@@ -292,10 +296,11 @@ def dump_tree(bb_list, tree):
         index = mmm[bb]
         line_number = bb.start_line_number
         label = bb.label
+        size = bb.get_depth()
         depth = bb.depth
         if not label:
             label = ''
-        print(str(index) + ' [label="' + str(line_number) + ':' + label + ':' + str(depth) + '"];')
+        print(str(index) + ' [label="' + str(line_number) + ':[' + label + ']:' + str(size) + ':' + str(depth) + '"];')
     for bb in bb_list:
         next_bb_list = tree[bb]
         if next_bb_list:
@@ -421,15 +426,16 @@ def dump_column(bb_list):
         width = len(label_name) + len(ctf_name) + 1
         if max_width < width:
             max_width = width
-        depth = str(bb.depth)
-        work_list.append((label_name, ctf_name, depth))
+        size = bb.get_size()
+        depth = bb.depth
+        work_list.append((label_name, ctf_name, size, depth))
     for x in work_list:
-        (label_name, ctf_name, depth) = x
+        (label_name, ctf_name, size, depth) = x
         width = len(label_name) + len(ctf_name)
         add_width = max_width - width
         space = ' ' * add_width
         bb_name = label_name + space + ctf_name
-        column_list.append([bb_name, depth])
+        column_list.append([bb_name, size, depth])
     return column_list
 
 def get_bb_list(target_config, filename, function_name):

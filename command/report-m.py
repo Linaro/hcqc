@@ -38,8 +38,8 @@ def report_t1_cl_ml_sub(root_dir, config_name, test_name, metric_name, part_glob
     if first_p:
         fix_bar = bar
     else:
-        # Skip "CFG" and "DEPTH"
-        fix_bar = bar[2:]
+        # Skip "CFG", "SIZE" and "DEPTH"
+        fix_bar = bar[3:]
     data_size = len(bar) - 1
     index = 0
     row_list = json_data[1:]

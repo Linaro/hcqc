@@ -416,13 +416,13 @@ def run_metric_work_if_match_p(arg_list, metric_worker):
     sys.exit(0)
 
 def print_bar(fout, column_name_list):
-    print('    [ "TITLE", ["CFG", "DEPTH"', file=fout, end='')
+    print('    [ "TITLE", ["CFG", "SIZE", "DEPTH"', file=fout, end='')
     for column_name in column_name_list:
         print(', "' + column_name + '"', file=fout, end='')
     print(']],', file=fout)
 
-def print_one_row(fout, bb_field, depth_field, column_data_list):
-    print('    [ "' + bb_field + '", [ "' + depth_field + '"', file=fout, end='')
+def print_one_row(fout, bb_field, size_field, depth_field, column_data_list):
+    print('    [ "' + bb_field + '", [ "' + size_field + '", "' + depth_field + '"', file=fout, end='')
     for column_data in column_data_list:
         print(', "' + column_data + '"', file=fout, end='')
     print(']]', file=fout, end='')
@@ -449,17 +449,20 @@ def metric_work_body_core(target_config, db_filename, bb_list, column_list, metr
         print('[', file=fout)
         column_name_list = metric_worker.get_column_name_list()
         print_bar(fout, column_name_list)
-        size = len(bb_list)
-        for index in range(0, size):
+        n_bb = len(bb_list)
+        total_size = 0
+        for index in range(0, n_bb):
             bb = bb_list[index]
             column = column_list[index]
             bb_field = column[0]
-            depth_field = column[1]
+            size = column[1]
+            depth = column[2]
             data_list = metric_worker.get_data_list(target_config, bb)
-            print_one_row(fout, bb_field, depth_field, data_list)
+            print_one_row(fout, bb_field, str(size), str(depth), data_list)
+            total_size += size
             print(',', file=fout)
         summary_list = metric_worker.get_summary_list(target_config)
-        print_one_row(fout, '*SUMMARY*', "-", summary_list)
+        print_one_row(fout, '*SUMMARY*', str(total_size), "-", summary_list)
         print(']', file=fout)
 
 def metric_work_body(target_config, db_filename, bb_list, column_list, metric_worker):

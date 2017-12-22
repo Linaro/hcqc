@@ -37,7 +37,7 @@ def report_c1_t1_mx_sub(root_dir, config_name, test_name, metric_name):
     if first_p:
         result_title.extend(bar)
     else:
-        result_title.extend(bar[2:])
+        result_title.extend(bar[3:])
     data_size = len(bar) - 1
     index = 0
     for row in json_data[1:]:
