@@ -14,8 +14,24 @@ mv_command = '/bin/mv'
 python_command = '/usr/bin/python3'
 verbose_p = False
 
-def error_message(message):
+def internal_error(message):
+    print('Internal error: ' + message + '\n')
+    sys.exit(1)
+
+def user_error(message):
     print('Error: ' + message + '\n')
+    sys.exit(1)
+
+def data_error(message):
+    print('Error(data): ' + message + '\n')
+    sys.exit(1)
+
+def config_error(message):
+    print('Error(config): ' + message + '\n')
+    sys.exit(1)
+
+def command_error(message):
+    print('Error(command): ' + message + '\n')
     sys.exit(1)
 
 def show_command_line(command_line_list):
@@ -28,7 +44,7 @@ def do_execute_command0(command_line_list):
     show_command_line(command_line_list)
     cp = subprocess.run(command_line_list, stdout=subprocess.PIPE)
     if cp.returncode != 0:
-        error_message('do_execute_command0: ' + command_line_list)
+        internal_error('do_execute_command0: ' + command_line_list)
     lines = cp.stdout.decode('utf-8').splitlines()
     return lines
 
@@ -42,7 +58,7 @@ def do_execute_command1_with_check(command_line_list):
     cp = subprocess.run(command_line_list)
     if cp.returncode != 0:
         command_line = ' '.join(command_line_list)
-        error_message('run :' + command_line)
+        command_error('run: ' + command_line)
 
 def do_execute_command2(command_line_list):
     show_command_line(command_line_list)
@@ -54,13 +70,13 @@ def compile_source(command, filename, flag_list, result_filename):
     command_line_list = [command] + flag_list + [filename, '-o', result_filename]
     status = do_execute_command1(command_line_list)
     if status != 0:
-        error_message('compile ' + filename)
+        command_error('compile: ' + filename)
 
 def make_executable(command, flag_list, filename_list, exec_filename, lib_list):
     command_line_list = [command] + flag_list + filename_list + ['-o', exec_filename] + lib_list
     status = do_execute_command1(command_line_list)
     if status != 0:
-        error_message('link ' + exec_filename)
+        command_error('link: ' + exec_filename)
 
 def run_executable(exec_filename, src_dir, in_type, in_filename, work_dir, out_type, out_filename):
     command_line_list = [exec_filename]
@@ -73,7 +89,7 @@ def run_executable(exec_filename, src_dir, in_type, in_filename, work_dir, out_t
         tmp_in_filename = src_dir + in_filename
         command_line_list.extend([tmp_in_filename])
     else:
-        error_message('run_executable')
+        config_error('illegal input type:' + in_type)
     if out_type == "NONE":
         pass
     elif out_type == "STDOUT":
@@ -83,21 +99,27 @@ def run_executable(exec_filename, src_dir, in_type, in_filename, work_dir, out_t
         tmp_out_filename = work_dir + out_filename
         command_line_list.extend([tmp_out_filename])
     else:
-        error_message('run_executable')
+        config_error('illegal output type:' + out_type)
     command_line_list.extend(['2>&1'])
     status = do_execute_command2(command_line_list)
     if status != 0:
-        error_message('run ' +  exec_filename)
+        command_error('run: ' +  exec_filename)
 
 def check_execution_result(out_filename, answer_filename):
     global diff_command
     status = do_execute_command1([diff_command, out_filename, answer_filename])
     if status != 0:
-        error_message('check ' + out_filename)
+        command_error('check: ' + out_filename)
 
-def get_key_value(map, key):
+def get_c_key_value(map, key):
     if not (key in map):
-        error_message('map value')
+        config_error('cannot find key "' + key + '" in configuration file')
+    value = map[key]
+    return value
+
+def get_p_key_value(map, key):
+    if not (key in map):
+        config_error('cannot find key "' + key + '" in program info file')
     value = map[key]
     return value
 
@@ -110,43 +132,43 @@ def load_config_file(filename):
     return config_data
 
 def get_cf_distribution(config_data):
-    xdistribution = get_key_value(config_data, 'DISTRIBUTION')
+    xdistribution = get_c_key_value(config_data, 'DISTRIBUTION')
     return xdistribution
 
 def get_cf_arch(config_data):
-    xarch = get_key_value(config_data, 'ARCH')
+    xarch = get_c_key_value(config_data, 'ARCH')
     return xarch
 
 def get_cf_cpu(config_data):
-    xcpu = get_key_value(config_data, 'CPU')
+    xcpu = get_c_key_value(config_data, 'CPU')
     return xcpu
 
 def get_cf_language(config_data):
-    xlanguage = get_key_value(config_data, 'LANGUAGE')
+    xlanguage = get_c_key_value(config_data, 'LANGUAGE')
     return xlanguage
 
 def get_cf_compiler(config_data):
-    xcompiler = get_key_value(config_data, 'COMPILER')
+    xcompiler = get_c_key_value(config_data, 'COMPILER')
     return xcompiler
 
 def get_cf_command(config_data):
-    xcommand = get_key_value(config_data, 'COMMAND')
+    xcommand = get_c_key_value(config_data, 'COMMAND')
     return xcommand
 
 def get_cf_version(config_data):
-    version = get_key_value(config_data, 'VERSION')
+    version = get_c_key_value(config_data, 'VERSION')
     return version
 
 def get_cf_opt_flags(config_data):
-    opt_flags = get_key_value(config_data, 'OPT_FLAGS')
+    opt_flags = get_c_key_value(config_data, 'OPT_FLAGS')
     return opt_flags
 
 def get_cf_asm_flags(config_data):
-    asm_flags = get_key_value(config_data, 'ASM_FLAGS')
+    asm_flags = get_c_key_value(config_data, 'ASM_FLAGS')
     return asm_flags
 
 def get_cf_flag_db(config_data):
-    flag_db = get_key_value(config_data, 'FLAG_DB')
+    flag_db = get_c_key_value(config_data, 'FLAG_DB')
     return flag_db
 
 def load_program_info_file(filename):
@@ -158,49 +180,49 @@ def load_program_info_file(filename):
     return program_info
 
 def get_pi_language(program_info):
-    language = get_key_value(program_info, 'LANGUAGE')
+    language = get_p_key_value(program_info, 'LANGUAGE')
     return language
 
 def get_pi_main_flags(program_info):
-    main_flags = get_key_value(program_info, 'MAIN_FLAGS')
+    main_flags = get_p_key_value(program_info, 'MAIN_FLAGS')
     return main_flags
 
 def get_pi_kernel_flags(program_info):
-    kernel_flags = get_key_value(program_info, 'KERNEL_FLAGS')
+    kernel_flags = get_p_key_value(program_info, 'KERNEL_FLAGS')
     return kernel_flags
 
 def get_pi_link_flags(program_info):
-    link_flags = get_key_value(program_info, 'LINK_FLAGS')
+    link_flags = get_p_key_value(program_info, 'LINK_FLAGS')
     return link_flags
 
 def get_pi_lib_list(program_info):
-    lib_list = get_key_value(program_info, 'LIB_LIST')
+    lib_list = get_p_key_value(program_info, 'LIB_LIST')
     return lib_list
 
 def get_pi_main_filename(program_info):
-    main_filename = get_key_value(program_info, 'MAIN_FILENAME')
+    main_filename = get_p_key_value(program_info, 'MAIN_FILENAME')
     return main_filename
 
 def get_pi_kernel_filename(program_info):
-    kernel_filename = get_key_value(program_info, 'KERNEL_FILENAME')
+    kernel_filename = get_p_key_value(program_info, 'KERNEL_FILENAME')
     return kernel_filename
 
 def get_pi_kernel_function_name(program_info):
-    kernel_function_name = get_key_value(program_info, 'KERNEL_FUNCTION_NAME')
+    kernel_function_name = get_p_key_value(program_info, 'KERNEL_FUNCTION_NAME')
     return kernel_function_name
 
 def get_pi_input(program_info):
-    input = get_key_value(program_info, 'INPUT')
+    input = get_p_key_value(program_info, 'INPUT')
     size = len(input)
     if size != 2 or not (input[0] in ["NONE", "STDIN", "FILE"]):
-        error_message('illegal INPUT : ' + input)
+        config_error('illegal INPUT : ' + input)
     return (input[0], input[1])
 
 def get_pi_output(program_info):
-    output = get_key_value(program_info, 'OUTPUT')
+    output = get_p_key_value(program_info, 'OUTPUT')
     size = len(output)
     if size != 2 or not (output[0] in ["NONE", "STDOUT", "FILE"]):
-        error_message('illegal OUTPUT : ' + output)
+        config_error('illegal OUTPUT : ' + output)
     return (output[0], output[1])
 
 def fix_flags(flag_db_map, flag_list):
@@ -208,7 +230,7 @@ def fix_flags(flag_db_map, flag_list):
     for flag in flag_list:
         if flag[0] == '?':
             if not (flag in flag_db_map):
-                error_message('No flag variable definition: ' + flag)
+                config_error('No flag variable definition: ' + flag)
             value = flag_db_map[flag]
             if value:
                 fix_flag_list.extend([value])
@@ -251,7 +273,7 @@ def build_and_run_e(config_data, src_dir, work_dir, program_info, flag_db_map, r
         tmp_out_filename = work_dir + out_filename
         check_execution_result(tmp_out_filename, answer_filename)
     else:
-        error_message('build_and_run_e')
+        config_error('illegal output type:' + out_type)
 
 def get_basename(filename):
     index = filename.rfind('/')
@@ -260,7 +282,7 @@ def get_basename(filename):
         short_filename = filename[index+1:]
     index = short_filename.rfind('.')
     if index <= 0:
-        error_message('get_basename: ' + filename)
+        config_error('get_basename: ' + filename)
     return short_filename[0:index]
 
 def build_and_run(config_data, src_dir, work_dir, program_info, flag_db_map, m_filename, k_filename):
@@ -291,11 +313,11 @@ def make_flag_db_map(config_data):
     for pair in flag_db:
         size = len(pair)
         if size != 2:
-            error_message('illegal FLAG_DB : ' + pair)
+            config_error('illegal FLAG_DB : ' + pair)
         key = pair[0]
         value = pair[1]
         if key in flag_db_map:
-            error_message('multiple definitions in FLAG_DB : ' + key)
+            config_error('multiple definitions in FLAG_DB : ' + key)
         flag_db_map[key] = value
     return flag_db_map
 
@@ -358,27 +380,27 @@ def hcqc_1(root_dir, arg_verbose_p, config_name, test_name, metric_name):
                 if verbose_p:
                     print('Warning: metric ok ' + metric_command + '\n')
                 return
-    error_message('no metric: ' + metric_name)
+    internal_error('no metric: ' + metric_name)
 
 def usage():
-    error_message('Usage: metric-command root-dir config-name test-name asm-filename db-filename')
+    user_error('Usage: metric-command root-dir config-name test-name asm-filename db-filename')
 
 def check_arch(arch):
     lines = do_execute_command0([uname_command, "-m"])
     if lines[0] != arch:
-        error_message("arch mismatch: `" + arch + "' in config : `" + lines[0] + "' by uname")
+        config_error("arch mismatch: `" + arch + "' in config : `" + lines[0] + "' by uname")
 
 def check_language(config_data, program_info):
     clanguage = get_cf_language(config_data)
     planguage = get_pi_language(program_info)
     if clanguage != planguage:
-        error_message("language mismatch: `" + clanguage + "' in config : `" + planguage + "' in program-info")
+        config_error("language mismatch: `" + clanguage + "' in config : `" + planguage + "' in program-info")
 
 def check_compiler_version(command, version):
     lines = do_execute_command0([command, "--version"])
     index = lines[0].find(' ' + version)
     if index == -1:
-        error_message("version mismatch: `" + version + "' in config : `" + lines[0] + "' by " + command)
+        config_error("version mismatch: `" + version + "' in config : `" + lines[0] + "' by " + command)
 
 def cfg_work(target_config, asm_filename, function_name):
     bb_list = cfg.get_bb_list(target_config, asm_filename, function_name)
@@ -429,19 +451,19 @@ def print_one_row(fout, bb_field, size_field, depth_field, column_data_list):
 
 class MetricWorker():
     def match_p(self, target_config, test_name):
-        error_message('match_p')
+        internal_error('match_p')
 
     def set_up_before_getting_data(self, target_config, bb_list):
-        error_message('set_up_before_getting_data')
+        internal_error('set_up_before_getting_data')
 
     def get_column_name_list(self):
-        error_message('get_column_name_list')
+        internal_error('get_column_name_list')
 
     def get_data_list(self, target_config, bb):
-        error_message('get_data_list')
+        internal_error('get_data_list')
 
     def get_summary_list(self, target_config):
-        error_message('get_summary_list')
+        internal_error('get_summary_list')
 
 def metric_work_body_core(target_config, db_filename, bb_list, column_list, metric_worker):
     metric_worker.set_up_before_getting_data(target_config, bb_list)

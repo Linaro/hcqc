@@ -32,6 +32,15 @@ class Config():
         else:
             return None
 
+    def get_table_branch_prologue_number(self):
+        error_message('get_table_branch_prologue_number')
+
+    def trace_table_branch_prologue(self, region_status, line):
+        error_message('trace_table_branch_prologue')
+
+    def get_table_branch_content(self, line):
+        error_message('get_table_branch_content')
+
 def strcls(class_name):
     global_symbol_table = globals()
     return global_symbol_table[class_name]
@@ -229,15 +238,6 @@ class C_aarch64__(Config):
             return True
         else:
             return False
-
-    def get_table_branch_prologue_number(self):
-        error_message('get_table_branch_prologue_number')
-
-    def trace_table_branch_prologue(self, region_status, line):
-        error_message('trace_table_branch_prologue')
-
-    def get_table_branch_content(self, line):
-        error_message('get_table_branch_content')
 
     def fall_through_p(self, branch_op):
         if branch_op in ['b', 'ret', 'bal', 'b.al', 'bnv', 'b.nv']:
@@ -446,15 +446,6 @@ class C_x86_64__(Config):
             return True
         else:
             return False
-
-    def get_table_branch_prologue_number(self):
-        error_message('get_table_branch_prologue_number')
-
-    def trace_table_branch_prologue(self, region_status, line):
-        error_message('trace_table_branch_prologue')
-
-    def get_table_branch_content(self, line):
-        error_message('get_table_branch_content')
 
     def fall_through_p(self, branch_op):
         if branch_op in ['jmp', 'retq', 'ret']:

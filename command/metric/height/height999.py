@@ -112,7 +112,7 @@ def parse_arg_part_core(line):
                 pos = tmp_pos
                 continue
             #print('>>> ' + tmp + ':' + line[pos:])
-            #driver.error_message('check')
+            #driver.internal_error('check')
         m = imm1_pattern.match(line, pos)
         if not m:
             m = imm2_pattern.match(line, pos)
@@ -138,7 +138,7 @@ def parse_arg_part_core(line):
                 tmp = lo12_head + tmp
             assoc_list.append(('SYM', tmp))
             continue
-        driver.error_message('parse_arg_part_core: ' + line)
+        driver.internal_error('parse_arg_part_core: ' + line)
     return assoc_list
 
 def parse_arg_part(line):
@@ -161,7 +161,7 @@ def parse_arg_part(line):
             continue
         if tag == 'BE':
             b_part_p = False
-            result_assoc_list.append(('B', b_part)) 
+            result_assoc_list.append(('B', b_part))
             continue
         if address_part_p:
             address_part.append((tag, item))
@@ -170,7 +170,7 @@ def parse_arg_part(line):
         else:
             result_assoc_list.append((tag, item))
     if address_part_p or b_part_p:
-        driver.error_message('parse_arg_part')
+        driver.internal_error('parse_arg_part')
     return result_assoc_list
 
 def add_item(any_items, item):
@@ -231,7 +231,7 @@ def form_p(form, assoc_list):
             if tag != 'R':
                 return False
             if content == 'NZCV' or content == 'FPSR':
-                driver.error_message('form_p:' + content)
+                driver.internal_error('form_p:' + content)
             continue
         elif f == 'A':
             if not tag in ['AE']:
@@ -254,7 +254,7 @@ def form_p(form, assoc_list):
                 return False
             continue
         else:
-            driver.error_message('form_p')
+            driver.internal_error('form_p')
     return True
 
 def extract_items(assoc_list):
@@ -268,7 +268,7 @@ def extract_items(assoc_list):
             for (tag2, item2) in item:
                 if a_head == None:
                     if tag2 != 'R':
-                        driver.error_message('extract_items 1')
+                        driver.internal_error('extract_items 1')
                     a_head = item2
                 if tag2 == 'R':
                     item_list.append(item2)
@@ -281,13 +281,13 @@ def extract_items(assoc_list):
         elif tag == 'IMM' or tag == 'SYM':
             continue
         else:
-            driver.error_message('extract_items 2')
+            driver.internal_error('extract_items 2')
     return (a_head, item_list)
 
 def check_1(line, tmp_list):
     if 0 < len(tmp_list):
         return
-    driver.error_message('check_1')
+    driver.internal_error('check_1')
 
 # TODO: ???
 # register overlap (x3, w3)
@@ -298,7 +298,7 @@ def get_use_and_def_items(target_config, line, op):
     arg_part = get_arg_part(line, op)
     assoc_list = parse_arg_part(arg_part)
     if uc_op_p(op):
-        driver.error_message('get_use_and_def_items: 0')
+        driver.internal_error('get_use_and_def_items: 0')
     if target_config.load_op_p(op):
         (a_head, item_list) = extract_items(assoc_list)
         if form_group_p(['R!', 'RAI'], assoc_list):
@@ -324,7 +324,7 @@ def get_use_and_def_items(target_config, line, op):
         elif form_group_p(['BA'], assoc_list):
             pass
         else:
-            driver.error_message('get_use_and_def_items: 1')
+            driver.internal_error('get_use_and_def_items: 1')
         use_items.append('MEM')
     elif target_config.store_op_p(op):
         (a_head, item_list) = extract_items(assoc_list)
@@ -339,7 +339,7 @@ def get_use_and_def_items(target_config, line, op):
         elif form_group_p(['BA'], assoc_list):
             pass
         else:
-            driver.error_message('get_use_and_def_items: 2')
+            driver.internal_error('get_use_and_def_items: 2')
         for x in item_list:
             add_item(use_items, x)
         def_items.append('MEM')
@@ -351,7 +351,7 @@ def get_use_and_def_items(target_config, line, op):
             # RR --> RS
             def_items.append(item_list[0])
         else:
-            driver.error_message('get_use_and_def_items: 3')
+            driver.internal_error('get_use_and_def_items: 3')
     elif overwrite_op_p(op):
         (a_head, item_list) = extract_items(assoc_list)
         check_1(line, item_list)
@@ -424,16 +424,15 @@ def r_to_r_id(items):
         m = r_pattern.match(item, 0)
         if m:
             r = m.group()
-            n = r[1:]
             id = int(r[1:]) + 2000
             fix_items.append(str(id))
             continue
         if item in ['MEM', 'NZCV']:
             fix_items.append(item)
             continue
-        driver.error_message('get_use_and_def_items: 3')
+        driver.internal_error('get_use_and_def_items: 3')
     return fix_items
-    
+
 def add_dependence(dg, execution_trace_map, index, use_items, def_items):
     use_items = r_to_r_id(use_items)
     def_items = r_to_r_id(def_items)
@@ -453,7 +452,7 @@ def add_dependence(dg, execution_trace_map, index, use_items, def_items):
     for (tag, p_index) in trace_list:
         add_dependence_edge(dg, p_index, index)
         if tag != 'def':
-            driver.error_message('add_dependence')
+            driver.internal_error('add_dependence')
         break
     for item in use_items:
         put_execution_trace(execution_trace_map, index, 'use', item)

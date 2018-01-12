@@ -9,7 +9,7 @@ def test_cfg(target_config, asm_filename, function_name):
         print(column)
 
 def usage():
-    driver.error_message('Usage: python3 test-cfg.py arch compiler version asm-filename kernel-function-name')
+    driver.user_error('Usage: python3 test-cfg.py arch compiler version asm-filename kernel-function-name')
 
 def call_test_cfg(arg_list):
     size = len(arg_list)

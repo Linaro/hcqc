@@ -32,7 +32,7 @@ def report_c1_t1_mx_sub(root_dir, config_name, test_name, metric_name):
     json_data = load_json_file(db_filename)
     title = get_title(json_data)
     if title[0] != 'TITLE':
-        driver.error_message('report_c1_t1_mx_sub 0')
+        driver.data_error('report_c1_t1_mx_sub 0')
     bar = title[1]
     if first_p:
         result_title.extend(bar)
@@ -44,7 +44,7 @@ def report_c1_t1_mx_sub(root_dir, config_name, test_name, metric_name):
         bb = row[0]
         data = row[1]
         if len(data) != data_size:
-            driver.error_message('report_c1_t1_mx_sub 1')
+            driver.data_error('report_c1_t1_mx_sub 1')
         if first_p:
             data.insert(0, bb)
             result_table.append(data)
@@ -73,7 +73,7 @@ def report_c1_t1_mx(root_dir, config_name, test_name, metric_name_list, csv_file
         print("generate " + csv_filename)
 
 def usage():
-    driver.error_message('Usage: hcqc-report [--v] config-name test-name report-id metric_name ...')
+    driver.user_error('Usage: hcqc-report [--v] config-name test-name report-id metric_name ...')
 
 def report1_entry(arg_list):
     global verbose_p

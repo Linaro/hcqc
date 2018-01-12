@@ -13,7 +13,7 @@ class VectorizeMetricWorker(driver.MetricWorker):
         if target_config.compiler == "ClangLLVM":
             return True
         return False
-    
+
     def set_up_before_getting_data(self, target_config, bb_list):
         pass
 

@@ -496,12 +496,12 @@ The metric program in HCQC is a set of programs to investigate the quality of co
 
 ### Status of each metric program
 
-| arch | compiler | op | kind | regalloc | ilp | swpl | vectorize |
+| arch | compiler | op | kind | regalloc | height | ilp | swpl | vectorize |
 |---|---|---|---|---|---|---|---|
-|AArch64 | GCC | Y | Y | Y | N | N | N |
-|AArch64 | Clang/LLVM | Y | Y | Y | N | N | N |
-|x86_64 | GCC | Y | N | N | N | N | N |
-|x86_64 | Clang/LLVM | Y | N | Y | N | N | N |
+|AArch64 | GCC | Y | Y | Y | Y | N | N | N |
+|AArch64 | Clang/LLVM | Y | Y | Y | Y | N | N | N |
+|x86_64 | GCC | Y | N | N | N | N | N | N |
+|x86_64 | Clang/LLVM | Y | N | Y | N | N | N | N |
 
 ### `op`
 
@@ -566,6 +566,14 @@ The details of this process vary depending on the compiler.
 
   implements the process of detecting and counting them.
 
+(Note): LLVM considers load instructions or store instructions generated at the entry and the exit of a function as spill codes.
+However, GCC does not regard these instructions as spill codes.
+Therefore, when comparing the number of spill codes at the entry and the exit of a function, it is necessary to consider these differences.
+
+### `height`
+
+The metric program `height` examines the height of the data dependence graph of the instruction in each basic block.
+By referring to these values, it is possible to detect the problem of lowering the instruction level parallelism as a result of using the same register within a narrow range by a register allocation pass.
 
 ### `ilp`
 

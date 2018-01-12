@@ -12,7 +12,7 @@ class VectorizeMetricWorker(driver.MetricWorker):
 
     def set_up_before_getting_data(self, target_config, bb_list):
         pass
-    
+
     def get_column_name_list(self):
         return ["vectorize"]
 

@@ -17,12 +17,12 @@ def test_metric(target_config, metric_filename, asm_filename, function_name, db_
     m = importlib.import_module(metric_filename)
     cls = find_class(m)
     if cls == None:
-        driver.error_message('No metric woker class')
+        driver.internal_error('No metric worker class')
     metric_worker = cls()
     driver.metric_work_body(target_config, db_filename, bb_list, column_list, metric_worker)
 
 def usage():
-    driver.error_message('Usage: python3 test-metric.py metric arch compiler version asm-filename kernel-function-name db-filename')
+    driver.user_error('Usage: python3 test-metric.py metric arch compiler version asm-filename kernel-function-name db-filename')
 
 def call_test_metric(arg_list):
     size = len(arg_list)

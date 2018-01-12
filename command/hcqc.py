@@ -2,7 +2,7 @@ import sys
 import driver
 
 def usage():
-    driver.error_message('Usage: hcqc [--v] config-name test-name metric_name ...')
+    driver.user_error('Usage: hcqc [--v] config-name test-name metric_name ...')
 
 def hcqc_entry(arg_list):
     verbose_p = False

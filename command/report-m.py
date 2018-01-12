@@ -32,7 +32,7 @@ def report_t1_cl_ml_sub(root_dir, config_name, test_name, metric_name, part_glob
     json_data = load_json_file(db_filename)
     title = get_title(json_data)
     if title[0] != 'TITLE':
-        driver.error_message('report_c1_t1_mx_sub 0')
+        driver.data_error('report_t1_cl_ml_sub 0')
     bar = title[1]
     fix_bar = None
     if first_p:
@@ -49,7 +49,7 @@ def report_t1_cl_ml_sub(root_dir, config_name, test_name, metric_name, part_glob
         bb = row[0]
         data = row[1]
         if len(data) != data_size:
-            driver.error_message('report_c1_t1_mx_sub 1')
+            driver.data_error('report_t1_cl_ml_sub 1')
         fix_data = None
         if first_p:
             fix_data = [ bb ]
@@ -58,7 +58,7 @@ def report_t1_cl_ml_sub(root_dir, config_name, test_name, metric_name, part_glob
             # Skip BB
             fix_data = data[1:]
         if len(fix_data) != len(fix_bar):
-            driver.error_message('report_c1_t1_mx_sub 2')
+            driver.data_error('report_t1_cl_ml_sub 2')
         fix_data = pad_data(fix_bar, fix_data, part_global_title)
         if first_p:
             result_table.append(fix_data)
@@ -91,7 +91,7 @@ def pad_data(bar, data, part_global_title):
     if len(fix_data) != len(part_global_title):
         print(fix_data)
         print(part_global_title)
-        driver.error_message('pad_data')
+        driver.data_error('pad_data')
     return fix_data
 
 def gen_csv_file(csv_filename, result_table):
@@ -132,7 +132,7 @@ def find_mark(list, start_index):
         if list[index] == -1:
             return index
         index += 1
-    driver.error_message('find_mark')
+    driver.data_error('find_mark')
 
 def make_global_title_sub(root_dir, config_name, test_name, metric_name, first_p):
     global result_title
@@ -145,7 +145,7 @@ def make_global_title_sub(root_dir, config_name, test_name, metric_name, first_p
     json_data = load_json_file(db_filename)
     title = get_title(json_data)
     if title[0] != 'TITLE':
-        driver.error_message('make_global_title_sub')
+        driver.data_error('make_global_title_sub')
     bar = title[1]
     if first_p:
         result_title.extend(bar)
@@ -226,7 +226,7 @@ def make_cut_head_list(head_list):
         else:
             pass
     if cut_head == None or cut_head == -1:
-        driver.error_message('make_cut_head_list')
+        driver.data_error('make_cut_head_list')
     cut_head_list = []
     for (index, h) in head_list:
         if h == cut_head:
@@ -234,7 +234,7 @@ def make_cut_head_list(head_list):
     return cut_head_list
 
 def usage():
-    driver.error_message('Usage: hcqc-m-report [--v] test-name report-name --c config-name ... --m metric_name ...')
+    driver.user_error('Usage: hcqc-m-report [--v] test-name report-name --c config-name ... --m metric_name ...')
 
 def report_m_entry(arg_list):
     global verbose_p
