@@ -497,7 +497,7 @@ The metric program in HCQC is a set of programs to investigate the quality of co
 ### Status of each metric program
 
 | arch | compiler | op | kind | regalloc | height | ilp | swpl | vectorize |
-|---|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|---|---|
 |AArch64 | GCC | Y | Y | Y | Y | N | N | N |
 |AArch64 | Clang/LLVM | Y | Y | Y | Y | N | N | N |
 |x86_64 | GCC | Y | N | N | N | N | N | N |
