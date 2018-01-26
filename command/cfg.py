@@ -1,4 +1,5 @@
 import sys
+import os
 import re
 
 import graph
@@ -440,6 +441,8 @@ def dump_column(bb_list):
 
 def get_bb_list(target_config, filename, function_name):
     bb_list = None
+    if not os.path.exists(filename):
+        driver.data_error("file not found: `" + filename + "'")
     with open(filename, 'rt') as fin:
         table_branch_map = build_table_branch_map(target_config, fin)
     with open(filename, 'rt') as fin:

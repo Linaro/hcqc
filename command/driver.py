@@ -89,7 +89,7 @@ def run_executable(exec_filename, src_dir, in_type, in_filename, work_dir, out_t
         tmp_in_filename = src_dir + in_filename
         command_line_list.extend([tmp_in_filename])
     else:
-        config_error('illegal input type:' + in_type)
+        config_error('illegal input type: ' + in_type)
     if check_data_filename:
         command_line_list.extend([check_data_filename])
     if out_type == "NONE":
@@ -101,7 +101,7 @@ def run_executable(exec_filename, src_dir, in_type, in_filename, work_dir, out_t
         tmp_out_filename = work_dir + out_filename
         command_line_list.extend([tmp_out_filename])
     else:
-        config_error('illegal output type:' + out_type)
+        config_error('illegal output type: ' + out_type)
     command_line_list.extend(['2>&1'])
     status = do_execute_command2(command_line_list)
     if status != 0:
@@ -127,6 +127,8 @@ def get_p_key_value(map, key):
 
 def load_config_file(filename):
     global verbose_p
+    if not os.path.exists(filename):
+        data_error("file not found: `" + filename + "'")
     with open(filename, 'rt') as fin:
         config_data = json.load(fin)
     if verbose_p:
@@ -175,6 +177,8 @@ def get_cf_flag_db(config_data):
 
 def load_program_info_file(filename):
     global verbose_p
+    if not os.path.exists(filename):
+        data_error("file not found: `" + filename + "'")
     with open(filename, 'rt') as fin:
         program_info = json.load(fin)
     if verbose_p:
@@ -217,14 +221,14 @@ def get_pi_input(program_info):
     input = get_p_key_value(program_info, 'INPUT')
     size = len(input)
     if size != 2 or not (input[0] in ["NONE", "STDIN", "FILE"]):
-        config_error('illegal INPUT : ' + input)
+        config_error('illegal INPUT : ' + input[0])
     return (input[0], input[1])
 
 def get_pi_output(program_info):
     output = get_p_key_value(program_info, 'OUTPUT')
     size = len(output)
     if size != 2 or not (output[0] in ["NONE", "STDOUT", "FILE"]):
-        config_error('illegal OUTPUT : ' + output)
+        config_error('illegal OUTPUT : ' + output[0])
     return (output[0], output[1])
 
 def have_gen_check_data_p(program_info):

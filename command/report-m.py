@@ -1,4 +1,5 @@
 import sys
+import os
 import driver
 import json
 import csv
@@ -11,6 +12,8 @@ result_title = [ ]
 result_table = [ ]
 
 def load_json_file(filename):
+    if not os.path.exists(filename):
+        driver.data_error("file not found: `" + filename + "'")
     with open(filename, 'rt') as fin:
         json_data = json.load(fin)
     return json_data
