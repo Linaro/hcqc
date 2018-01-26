@@ -9,11 +9,16 @@ static int CCC[3][5];
 
 extern void kernel (int AAA[3][5], int BBB[3][5], int CCC[3][5], int *i_);
 
-const char *check_data_filename = "check.dat";
-
-int main ()
+int main (int argc, char *argv[])
 {
+  char *check_data_filename = NULL;
   int i, j;
+
+  if (argc != 2) {
+    fprintf(stderr, "No check datafile\n");
+    exit(1);
+  }
+  check_data_filename = argv[1];
 
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 5; j++) {
@@ -42,6 +47,7 @@ int main ()
     HCQC_check_data_s_i ("i", i_check, i);
   }
 #endif
+
   if (HCQC_error == 0)
     exit (0);
   else

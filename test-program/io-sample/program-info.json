@@ -1,0 +1,13 @@
+{
+    "LANGUAGE" : "C",
+    "MAIN_FLAGS" : ["?DEBUG_FLAG", "?C99_STANDARD"],
+    "KERNEL_FLAGS" : ["-D", "FOO", "?C99_STANDARD"],
+    "LINK_FLAGS" : ["?C99_STANDARD"],
+    "LIB_LIST" : ["-lm"],
+    "MAIN_FILENAME" : "io-main.c",
+    "KERNEL_FILENAME" : "io-kernel.c",
+    "KERNEL_FUNCTION_NAME" : "kernel",
+    "INPUT" : [ "NONE", "NONE" ],
+    "OUTPUT" : [ "NONE", "NONE" ],
+    "GEN_CHECK_DATA" : ""
+}

@@ -3,9 +3,11 @@
 typedef long long int HCQC_SIZE;
 #endif
 
-extern void HCQC_save_begin ();
+extern int HCQC_error;
+
+extern void HCQC_save_begin (const char *data_filename);
 extern void HCQC_save_end ();
-extern void HCQC_load_begin ();
+extern void HCQC_load_begin (const char *data_filename);
 extern void HCQC_load_end ();
 extern void HCQC_save_data_s (const char *name, const void *data_start, int unit_size);
 extern void HCQC_save_data_a (const char *name, const void *data_start, int unit_size, HCQC_SIZE unit_number);

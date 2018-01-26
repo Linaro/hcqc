@@ -11,10 +11,11 @@
 
 #include "libHCQC.h"
 
-static char *data_filename = "check.dat";
+int HCQC_error = 0;
+
 static int DATA_FD;
 
-void HCQC_save_begin (int aux_mode)
+void HCQC_save_begin (const char *data_filename)
 {
   DATA_FD = creat (data_filename, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
   if (DATA_FD == -1) {
@@ -77,7 +78,7 @@ void HCQC_save_data_a (const char *name, const void *data_start, int unit_size, 
   HCQC_save_data_common_1 (DATA_FD, data_start, unit_size, unit_number);
 }
 
-void HCQC_save_end (int aux_mode)
+void HCQC_save_end ()
 {
   if (close (DATA_FD) == -1) {
     abort ();
@@ -85,7 +86,7 @@ void HCQC_save_end (int aux_mode)
   DATA_FD = -1;
 }
 
-void HCQC_load_begin ()
+void HCQC_load_begin (const char *data_filename)
 {
   DATA_FD = open (data_filename, O_RDONLY);
   if (DATA_FD == -1) {
@@ -164,8 +165,10 @@ void HCQC_check_data_s_b (const char *name, _Bool check_data, _Bool data)
   CHECK_PRINT ("name = \"%s\"", name);
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=%d correct=%d\n", data, check_data);
+    HCQC_error = 1;
+  }
 }
 
 void HCQC_check_data_s_i (const char *name, int check_data, int data)
@@ -173,8 +176,10 @@ void HCQC_check_data_s_i (const char *name, int check_data, int data)
   CHECK_PRINT ("name = \"%s\"", name);
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=%d correct=%d\n", data, check_data);
+    HCQC_error = 1;
+  }
 }
 
 void HCQC_check_data_s_ui (const char *name, unsigned int check_data, unsigned int data)
@@ -182,8 +187,10 @@ void HCQC_check_data_s_ui (const char *name, unsigned int check_data, unsigned i
   CHECK_PRINT ("name = \"%s\"", name);
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=%u correct=%u\n", data, check_data);
+    HCQC_error = 1;
+  }
 }
 
 void HCQC_check_data_s_l (const char *name, long check_data, long data)
@@ -191,8 +198,10 @@ void HCQC_check_data_s_l (const char *name, long check_data, long data)
   CHECK_PRINT ("name = \"%s\"", name);
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=%ld correct=%ld\n", data, check_data);
+    HCQC_error = 1;
+  }
 }
 
 void HCQC_check_data_s_ul (const char *name, unsigned long check_data, unsigned long data)
@@ -200,8 +209,10 @@ void HCQC_check_data_s_ul (const char *name, unsigned long check_data, unsigned 
   CHECK_PRINT ("name = \"%s\"", name);
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=%lu correct=%lu\n", data, check_data);
+    HCQC_error = 1;
+  }
 }
 
 void HCQC_check_data_s_ll (const char *name, long long check_data, long long data)
@@ -209,8 +220,10 @@ void HCQC_check_data_s_ll (const char *name, long long check_data, long long dat
   CHECK_PRINT ("name = \"%s\"", name);
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=%lld correct=%lld\n", data, check_data);
+    HCQC_error = 1;
+  }
 }
 
 void HCQC_check_data_s_ull (const char *name, unsigned long long check_data, unsigned long long data)
@@ -218,8 +231,10 @@ void HCQC_check_data_s_ull (const char *name, unsigned long long check_data, uns
   CHECK_PRINT ("name = \"%s\"", name);
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=%llu correct=%llu\n", data, check_data);
+    HCQC_error = 1;
+  }
 }
 
 void HCQC_check_data_s_f (const char *name, float check_data, float data)
@@ -228,12 +243,15 @@ void HCQC_check_data_s_f (const char *name, float check_data, float data)
 #ifndef ERROR_RATIO
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=%E correct=%E\n", data, check_data);
+    HCQC_error = 1;
+  }
 #else
   float E_R = fabsf((check_data*ERROR_RATIO)/100);
   if ((check_data - data) > E_R) {
     CHECK_PRINT (" wrong=%E correct=%E range=[%E, %E]\n", data, check_data, check_data - E_R, check_data + E_R);
+    HCQC_error = 1;
   } else {
     CHECK_PRINT (" ok\n");
   }
@@ -246,12 +264,15 @@ void HCQC_check_data_s_d (const char *name, double check_data, double data)
 #ifndef ERROR_RATIO
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=%E correct=%E\n", data, check_data);
+    HCQC_error = 1;
+  }
 #else
   double E_R = fabs((check_data*ERROR_RATIO)/100);
   if ((check_data - data) > E_R) {
     CHECK_PRINT (" wrong=%E correct=%E range=[%E, %E]\n", data, check_data, check_data - E_R, check_data + E_R);
+    HCQC_error = 1;
   } else {
     CHECK_PRINT (" ok\n");
   }
@@ -264,12 +285,15 @@ void HCQC_check_data_s_ld (const char *name, long double check_data, long double
 #ifndef ERROR_RATIO
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=%LE correct=%LE\n", data, check_data);
+    HCQC_error = 1;
+  }
 #else
   long double E_R = fabsl((check_data*ERROR_RATIO)/100);
   if ((check_data - data) > E_R) {
     CHECK_PRINT (" wrong=%LE correct=%LE range=[%LE, %LE]\n", data, check_data, check_data - E_R, check_data + E_R);
+    HCQC_error = 1;
   } else {
     CHECK_PRINT (" ok\n");
   }
@@ -282,8 +306,10 @@ void HCQC_check_data_s_cf (const char *name, float _Complex check_data, float _C
 #ifndef ERROR_RATIO
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=(%E)+i(%E) correct=(%E)+i(%E)\n", crealf(data), cimagf(data), crealf(check_data), cimagf(check_data));
+    HCQC_error = 1;
+  }
 #else
   float E_R = fabsf((crealf(check_data)*ERROR_RATIO)/100);
   float E_I = fabsf((cimagf(check_data)*ERROR_RATIO)/100);
@@ -291,6 +317,7 @@ void HCQC_check_data_s_cf (const char *name, float _Complex check_data, float _C
       || ((cimagf(check_data) - cimagf(data)) > E_I)) {
     CHECK_PRINT (" wrong=(%E)+i(%E) correct=(%E)+i(%E)", crealf(data), cimagf(data), crealf(check_data), cimagf(check_data));
     CHECK_PRINT (" range=[%E, %E]+i[%E, %E]\n", crealf(check_data)-E_R, crealf(check_data)+E_R, cimagf(check_data)-E_I, cimagf(check_data)+E_I);
+    HCQC_error = 1;
   } else {
     CHECK_PRINT (" ok\n");
   }
@@ -303,8 +330,10 @@ void HCQC_check_data_s_cd (const char *name, double _Complex check_data, double 
 #ifndef ERROR_RATIO
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=(%E)+i(%E) correct=(%E)+i(%E)\n", creal(data), cimag(data), creal(check_data), cimag(check_data));
+    HCQC_error = 1;
+  }
 #else
   double E_R = fabs((creal(check_data)*ERROR_RATIO)/100);
   double E_I = fabs((cimag(check_data)*ERROR_RATIO)/100);
@@ -312,6 +341,7 @@ void HCQC_check_data_s_cd (const char *name, double _Complex check_data, double 
       || ((cimag(check_data) - cimag(data)) > E_I)) {
     CHECK_PRINT (" wrong=(%E)+i(%E) correct=(%E)+i(%E)", creal(data), cimag(data), creal(check_data), cimag(check_data));
     CHECK_PRINT (" range=[%E, %E]+i[%E, %E]\n", creal(check_data)-E_R, creal(check_data)+E_R, cimag(check_data)-E_I, cimag(check_data)+E_I);
+    HCQC_error = 1;
   } else {
     CHECK_PRINT (" ok\n");
   }
@@ -324,8 +354,10 @@ void HCQC_check_data_s_cld (const char *name, long double _Complex check_data, l
 #ifndef ERROR_RATIO
   if (check_data == data)
     CHECK_PRINT (" ok\n");
-  else
+  else {
     CHECK_PRINT (" wrong=(%LE)+i(%LE) correct=(%LE)+i(%LE)\n", creall(data), cimagl(data), creall(check_data), cimagl(check_data));
+    HCQC_error = 1;
+  }
 #else
   long double E_R = fabsl((creall(check_data)*ERROR_RATIO)/100);
   long double E_I = fabsl((cimagl(check_data)*ERROR_RATIO)/100);
@@ -333,6 +365,7 @@ void HCQC_check_data_s_cld (const char *name, long double _Complex check_data, l
       || ((cimagl(check_data) - cimagl(data)) > E_I)) {
     CHECK_PRINT (" wrong=(%LE)+i(%LE) correct=(%LE)+i(%LE)", creall(data), cimagl(data), creall(check_data), cimagl(check_data));
     CHECK_PRINT (" range=[%LE, %LE]+i[%LE, %LE]\n", creall(check_data)-E_R, creall(check_data)+E_R, cimagl(check_data)-E_I, cimagl(check_data)+E_I);
+    HCQC_error = 1;
   } else {
     CHECK_PRINT (" ok\n");
   }
@@ -357,6 +390,7 @@ void HCQC_check_data_a_b (const char *name, const _Bool *check_data, const _Bool
         }
         CHECK_PRINT (" index=%lld", i);
         CHECK_PRINT (" wrong=%d correct=%d\n", data[i], check_data[i]);
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -383,6 +417,7 @@ void HCQC_check_data_a_i (const char *name, const int *check_data, const int *da
         }
         CHECK_PRINT (" index=%lld", i);
         CHECK_PRINT (" wrong=%d correct=%d\n", data[i], check_data[i]);
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -409,6 +444,7 @@ void HCQC_check_data_a_ui (const char *name, const unsigned int *check_data, con
         }
         CHECK_PRINT (" index=%lld", i);
         CHECK_PRINT (" wrong=%u correct=%u\n", data[i], check_data[i]);
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -435,6 +471,7 @@ void HCQC_check_data_a_l (const char *name, const long *check_data, const long *
         }
         CHECK_PRINT (" index=%lld", i);
         CHECK_PRINT (" wrong=%ld correct=%ld\n", data[i], check_data[i]);
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -461,6 +498,7 @@ void HCQC_check_data_a_ul (const char *name, const unsigned long *check_data, co
         }
         CHECK_PRINT (" index=%lld", i);
         CHECK_PRINT (" wrong=%lu correct=%lu\n", data[i], check_data[i]);
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -487,6 +525,7 @@ void HCQC_check_data_a_ll (const char *name, const long long *check_data, const 
         }
         CHECK_PRINT (" index=%lld", i);
         CHECK_PRINT (" wrong=%lld correct=%lld\n", data[i], check_data[i]);
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -513,6 +552,7 @@ void HCQC_check_data_a_ull (const char *name, const unsigned long long *check_da
         }
         CHECK_PRINT (" index=%lld", i);
         CHECK_PRINT (" wrong=%llu correct=%llu\n", data[i], check_data[i]);
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -548,6 +588,7 @@ void HCQC_check_data_a_f (const char *name, const float *check_data, const float
 #else
         CHECK_PRINT (" wrong=%E correct=%E range=[%E, %E]\n", data[i], check_data[i], check_data[i] - E_R, check_data[i] + E_R);
 #endif
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -583,6 +624,7 @@ void HCQC_check_data_a_d (const char *name, const double *check_data, const doub
 #else
         CHECK_PRINT (" wrong=%E correct=%E range=[%E, %E]\n", data[i], check_data[i], check_data[i] - E_R, check_data[i] + E_R);
 #endif
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -618,6 +660,7 @@ void HCQC_check_data_a_ld (const char *name, const long double *check_data, cons
 #else
         CHECK_PRINT (" wrong=%LE correct=%LE range=[%LE, %LE]\n", data[i], check_data[i], check_data[i] - E_R, check_data[i] + E_R);
 #endif
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -656,6 +699,7 @@ void HCQC_check_data_a_cf (const char *name, const float _Complex *check_data, c
         CHECK_PRINT (" wrong=(%E)+i(%E) correct=(%E)+i(%E)", crealf(data[i]), cimagf(data[i]), crealf(check_data[i]), cimagf(check_data[i]));
         CHECK_PRINT (" range=[%E, %E]+i[%E, %E]\n", crealf(check_data[i])-E_R, crealf(check_data[i])+E_R, cimagf(check_data[i])-E_I, cimagf(check_data[i])+E_I);
 #endif
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -694,6 +738,7 @@ void HCQC_check_data_a_cd (const char *name, const double _Complex *check_data, 
         CHECK_PRINT (" wrong=(%E)+i(%E) correct=(%E)+i(%E)", creal(data[i]), cimag(data[i]), creal(check_data[i]), cimag(check_data[i]));
         CHECK_PRINT (" range=[%E, %E]+i[%E, %E]\n", creal(check_data[i])-E_R, creal(check_data[i])+E_R, cimag(check_data[i])-E_I, cimag(check_data[i])+E_I);
 #endif
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
@@ -732,6 +777,7 @@ void HCQC_check_data_a_cld (const char *name, const long double _Complex *check_
         CHECK_PRINT (" wrong=(%LE)+i(%LE) correct=(%LE)+i(%LE)", creall(data[i]), cimagl(data[i]), creall(check_data[i]), cimagl(check_data[i]));
         CHECK_PRINT (" range=[%LE, %LE]+i[%LE, %LE]\n", creall(check_data[i])-E_R, creall(check_data[i])+E_R, cimagl(check_data[i])-E_I, cimagl(check_data[i])+E_I);
 #endif
+	HCQC_error = 1;
       }
     }
     if (count == 0) {
