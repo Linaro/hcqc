@@ -8,5 +8,6 @@
     "KERNEL_FILENAME" : "kernel.c",
     "KERNEL_FUNCTION_NAME" : "ComputeSYMGS_ref",
     "INPUT" : [ "NONE", "NONE" ],
-    "OUTPUT" : [ "NONE", "NONE" ]
+    "OUTPUT" : [ "NONE", "NONE" ],
+    "GEN_CHECK_DATA" : ""
 }

@@ -1,8 +1,10 @@
 #include "header.h"
 
-SparseMatrix A;
-Vector r;
-Vector x;
+#define HPCG_NO_MPI
+
+extern SparseMatrix A;
+extern Vector r;
+extern Vector x;
 
 int ComputeSYMGS_ref() {
 #if 0
@@ -12,6 +14,7 @@ int ComputeSYMGS_ref() {
   ExchangeHalo(A,x);
 #endif
 #endif
+
   const local_int_t nrow = A.localNumberOfRows;
   double ** matrixDiagonal = A.matrixDiagonal;  // An array of pointers to the diagonal entries A.matrixValues
   const double * const rv = r.values;
