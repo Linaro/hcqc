@@ -1,0 +1,10 @@
+This program is derived from the following benchmark program.
+
+  Lattice QCD
+  Parallel benchmark programs
+
+  URL: http://luscher.web.cern.ch/luscher/QCDpbm/
+
+The license file of the original program is the following file.
+
+  hcqc/test-program/QCDpbm-det_pauli_dble/COPYING

@@ -1,0 +1,13 @@
+{
+    "LANGUAGE" : "C",
+    "MAIN_FLAGS" : ["?DEBUG_FLAG"],
+    "KERNEL_FLAGS" : [],
+    "LINK_FLAGS" : [],
+    "LIB_LIST" : [],
+    "MAIN_FILENAME" : "main.c",
+    "KERNEL_FILENAME" : "kernel.c",
+    "KERNEL_FUNCTION_NAME" : "mul_pauli_dble",
+    "INPUT" : [ "NONE", "NONE" ],
+    "OUTPUT" : [ "NONE", "NONE" ],
+    "GEN_CHECK_DATA" : ""
+}
