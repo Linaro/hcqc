@@ -1,6 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -g
-#CHECK_CFLAGS = -DERROR_RATIO=9
+CFLAGS = -std=c99 -g -DERROR_RATIO=10
 
 .PHONY: all clean
 

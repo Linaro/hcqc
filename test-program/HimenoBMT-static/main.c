@@ -65,7 +65,7 @@ int main()
   printf ("%e\n", gosa);
 #endif
 
-  if (6.710e-3 < gosa && gosa < 6.712e-3) {
+  if (6.710e-3 < gosa && gosa < 6.714e-3) {
     exit (0);
   } else {
     exit (1);
