@@ -1,0 +1,12 @@
+{
+    "LANGUAGE" : "C++",
+    "MAIN_FLAGS" : ["?DEBUG_FLAG"],
+    "KERNEL_FLAGS" : [],
+    "LINK_FLAGS" : [],
+    "LIB_LIST" : [],
+    "MAIN_FILENAME" : "main.cpp",
+    "KERNEL_FILENAME" : "kernel.cpp",
+    "KERNEL_FUNCTION_NAME" : "_Z2BOP12_reax_systemP14control_paramsP15simulation_dataP7storagePP10_reax_listP15output_controls",
+    "INPUT" : [ "NONE", "NONE" ],
+    "OUTPUT" : [ "NONE", "NONE" ]
+}

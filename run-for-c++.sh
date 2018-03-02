@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. ./c-parameter.sh
+. ./c++-parameter.sh
 
 #HCQC_OPTIONS="--v"
 #HCQC_REPORT_OPTIONS="--v"

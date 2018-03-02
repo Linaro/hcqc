@@ -1,0 +1,12 @@
+{
+    "DISTRIBUTION" : "CentOS Linux release 7.4.1708 (AltArch)",
+    "ARCH" : "aarch64",
+    "CPU" : "Cavium ThunderX2",
+    "LANGUAGE" : "C++",
+    "COMPILER" : "ClangLLVM",
+    "COMMAND" : "/usr/bin/clang++",
+    "VERSION" : "5.0.1",
+    "OPT_FLAGS" : ["-Ofast", "-ffp-contract=fast", "-mcpu=thunderx2t99"],
+    "ASM_FLAGS" : ["-S"],
+    "FLAG_DB" : [["?DEBUG_FLAG", "-g"]]
+}
