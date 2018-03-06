@@ -11,7 +11,6 @@ import cfg
 uname_command = '/bin/uname'
 diff_command = '/usr/bin/diff'
 mv_command = '/bin/mv'
-python_command = '/usr/bin/python3'
 verbose_p = False
 
 def internal_error(message):
@@ -415,8 +414,7 @@ def work_by_compiler(root_dir, config_name, test_name, metric_name):
 
 def run_metric_command(metric_command, root_dir, config_name, test_name, function_name, asm_filename, db_filename):
     global verbose_p
-    global python_command
-    command_line_list = [python_command, metric_command, root_dir, config_name, test_name, function_name, asm_filename, db_filename]
+    command_line_list = [metric_command, root_dir, config_name, test_name, function_name, asm_filename, db_filename]
     status = do_execute_command1(command_line_list)
     if status != 0:
         if verbose_p:
