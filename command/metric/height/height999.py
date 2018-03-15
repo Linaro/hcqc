@@ -20,364 +20,384 @@ def get_arg_part(line, op):
     tmp = m.groups()
     return tmp[0]
 
-def parse_arg_part_core(line):
+def get_use_and_def_items(target_config, line, op):
+    sub_line = get_arg_part(line, op)
+    term_a_list = make_term_a_list(sub_line)
+    term_a_list = fix_term_a_list(term_a_list)
+    fix_term_a_list_2(term_a_list)
+    fix_symbol_term(op, term_a_list)
+    (use_a_list, def_a_list) = split_use_and_def(target_config, op, term_a_list)
+    use_id_list = get_register_id_list(use_a_list)
+    def_id_list = get_register_id_list(def_a_list)
+    if target_config.load_op_p(op):
+        use_id_list.append('MEM')
+    elif target_config.store_op_p(op):
+        def_id_list.append('MEM')
+    else:
+        if read_flags_op(op):
+            use_id_list.append('NZCV')
+        if write_flags_op(op):
+            def_id_list.append('NZCV')
+    return (use_id_list, def_id_list)
+
+def make_term_a_list(line):
     size = len(line)
-    assoc_list = []
+    term_a_list = []
     pos = 0
-    reg1_pattern = re.compile('b\d+|h\d+|s\d+|d\d+|q\d+|r\d+|x\d+|w\d+|xzr|wzr|sp|wsp')
-    reg2_pattern = re.compile('v\d+')
-    reg2_1_pattern = re.compile('v\d+\.\d*[bhsd]')
-    reg2_2_pattern = re.compile('v\d+\.\d*[bhsd]\[\d+\]')
-    space_pattern = re.compile('\s+|\t+')
-    comma_pattern = re.compile(',')
-    as_pattern = re.compile('\[')
-    aep_pattern = re.compile('\]!')
-    ae_pattern = re.compile('\]')
-    bs_pattern = re.compile('{')
-    be_pattern = re.compile('}')
-    dash_pattern = re.compile('-')
-    s_pattern = re.compile('\s|\t|,|\[|\]|}')
-    imm1_pattern = re.compile('#?0x[abcdef\d]+')
-    imm2_pattern = re.compile('#?-?\d+')
-    lo12_pattern = re.compile('#?:lo12:')
-    sym_pattern = re.compile('\.?[\w_][\._\w\d]*')
-    sym_tail_pattern = re.compile('\+\d+')
+    a_part_p = False
     b_part_p = False
+    start_pos = None
     while pos < size:
-        lo12_head = None
-        m = space_pattern.match(line, pos)
-        if m:
-            tmp = m.group()
-            pos = pos + len(tmp)
-            continue
-        m = comma_pattern.match(line, pos)
-        if m:
-            tmp = m.group()
-            pos = pos + len(tmp)
-            continue
-        m = as_pattern.match(line, pos)
-        if m:
-            assoc_list.append(('AS', None))
-            pos = pos + 1
-            continue
-        m = aep_pattern.match(line, pos)
-        if m:
-            assoc_list.append(('AE!', None))
-            pos = pos + 2
-            continue
-        m = ae_pattern.match(line, pos)
-        if m:
-            assoc_list.append(('AE', None))
-            pos = pos + 1
-            continue
-        m = bs_pattern.match(line, pos)
-        if m:
-            assoc_list.append(('BS', None))
-            pos = pos + 1
+        c = line[pos]
+        if c == ',':
+            start_pos = make_term_a_list_sub(line, term_a_list, start_pos, pos)
+            if a_part_p or b_part_p:
+                term_a_list.append(('c', None))
+            else:
+                term_a_list.append(('C', None))
+        elif c == ' ' or c == '\t':
+            start_pos = make_term_a_list_sub(line, term_a_list, start_pos, pos)
+        elif c == '[':
+            start_pos = make_term_a_list_sub(line, term_a_list, start_pos, pos)
+            a_part_p = True
+            term_a_list.append(('AS', None))
+        elif c == ']':
+            start_pos = make_term_a_list_sub(line, term_a_list, start_pos, pos)
+            a_part_p = False
+            term_a_list.append(('AE', None))
+        elif c == '{':
+            start_pos = make_term_a_list_sub(line, term_a_list, start_pos, pos)
             b_part_p = True
-            continue
-        m = be_pattern.match(line, pos)
-        if m:
-            assoc_list.append(('BE', None))
-            pos = pos + 1
+            term_a_list.append(('BS', None))
+        elif c == '}':
+            start_pos = make_term_a_list_sub(line, term_a_list, start_pos, pos)
             b_part_p = False
-            continue
-        if b_part_p:
-            m = dash_pattern.match(line, pos)
-            if m:
-                tmp = m.group()
-                assoc_list.append(('SYM', tmp))
-                pos = pos + len(tmp)
-                continue
-        m = reg1_pattern.match(line, pos)
-        if not m:
-            m = reg2_pattern.match(line, pos)
-            if m:
-                m1 = reg2_1_pattern.match(line, pos)
-                if m1:
-                    m2 = reg2_2_pattern.match(line, pos)
-                    if m2:
-                        m = m2
-                    else:
-                        m = m1
-        if m:
-            tmp = m.group()
-            tmp_pos = pos + len(tmp)
-            if tmp_pos == size:
-                assoc_list.append(('R', tmp))
-                pos = tmp_pos
-                continue
-            m = s_pattern.match(line, tmp_pos)
-            if m:
-                assoc_list.append(('R', tmp))
-                pos = tmp_pos
-                continue
-            #print('>>> ' + tmp + ':' + line[pos:])
-            #driver.internal_error('check')
-        m = imm1_pattern.match(line, pos)
-        if not m:
-            m = imm2_pattern.match(line, pos)
-        if m:
-            tmp = m.group()
-            assoc_list.append(('IMM', tmp))
-            pos = pos + len(tmp)
-            continue
-        m = lo12_pattern.match(line, pos)
-        if m:
-            lo12_head = m.group()
-            pos = pos + len(lo12_head)
-        m = sym_pattern.match(line, pos)
-        if m:
-            tmp = m.group()
-            pos = pos + len(tmp)
-            m = sym_tail_pattern.match(line, pos)
-            if m:
-                tmp_t = m.group()
-                pos = pos + len(tmp_t)
-                tmp = tmp + tmp_t
-            if lo12_head:
-                tmp = lo12_head + tmp
-            assoc_list.append(('SYM', tmp))
-            continue
-        driver.internal_error('parse_arg_part_core: ' + line)
-    return assoc_list
-
-def parse_arg_part(line):
-    assoc_list = parse_arg_part_core(line)
-    address_part_p = False
-    address_part = []
-    b_part_p = False
-    b_part = []
-    result_assoc_list = []
-    for (tag, item) in assoc_list:
-        if tag == 'AS':
-            address_part_p = True
-            continue
-        if tag == 'AE!' or tag == 'AE':
-            address_part_p = False
-            result_assoc_list.append((tag, address_part))
-            continue
-        if tag == 'BS':
-            b_part_p = True
-            continue
-        if tag == 'BE':
-            b_part_p = False
-            result_assoc_list.append(('B', b_part))
-            continue
-        if address_part_p:
-            address_part.append((tag, item))
-        elif b_part_p:
-            b_part.append((tag, item))
+            term_a_list.append(('BE', None))
+        elif c == '!':
+            start_pos = make_term_a_list_sub(line, term_a_list, start_pos, pos)
+            term_a_list.append(('BANG', None))
+        elif c == '-' and b_part_p:
+            start_pos = make_term_a_list_sub(line, term_a_list, start_pos, pos)
+            term_a_list.append(('BAR', None))
         else:
-            result_assoc_list.append((tag, item))
-    if address_part_p or b_part_p:
-        driver.internal_error('parse_arg_part')
-    return result_assoc_list
+            if start_pos == None:
+                start_pos = pos
+        pos += 1
+    if a_part_p or b_part_p:
+        driver.internal_error('make_term_a_list')
+    make_term_a_list_sub(line, term_a_list, start_pos, pos)
+    return term_a_list
 
-def add_item(any_items, item):
-    if item and (not item in any_items):
-        any_items.append(item)
-
-def overwrite_op_p(op):
-    if op in ['movk']:
+def register_pattern_p(item):
+    reg_1_pattern = re.compile('b\d+|h\d+|s\d+|d\d+|q\d+|r\d+|x\d+|w\d+|xzr|wzr|sp|wsp')
+    m = reg_1_pattern.match(item, 0)
+    if m:
+        return True
+    reg_2_pattern = re.compile('v\d+\.\d*[bhsd]')
+    m = reg_2_pattern.match(item, 0)
+    if m:
+        return True
+    reg_3_pattern = re.compile('v\d+')
+    m = reg_3_pattern.match(item, 0)
+    if m:
         return True
     return False
+
+def make_term_a_list_sub(line, term_a_list, start_pos, pos):
+    if start_pos != None:
+        item = line[start_pos:pos]
+        if register_pattern_p(item):
+            term_a_list.append(('REG', item))
+        else:
+            term_a_list.append(('TERM', item))
+    return None
+
+def fix_term_a_list(term_a_list):
+    fix_term_a_list = []
+    prev_tag = None
+    prev_term = None
+    for term in term_a_list:
+        (tag, item) = term
+        if tag == 'BANG':
+            if prev_tag == 'AE':
+                fix_term_a_list.append(('AE!', None))
+            else:
+                driver.internal_error('fix_term_a_list')
+            prev_tag = None
+            prev_term = None
+        else:
+            if prev_term:
+                fix_term_a_list.append(prev_term)
+            prev_tag = tag
+            prev_term = term
+    if prev_term:
+        fix_term_a_list.append(prev_term)
+    return fix_term_a_list
+
+def fix_term_a_list_2(term_a_list):
+    index = 0
+    for term in term_a_list:
+        (tag, item) = term
+        if tag == 'AS':
+            fix_term_a_list_2_sub(term_a_list, index)
+        index += 1
+
+def fix_term_a_list_2_sub(term_a_list, index):
+    (tag1, item1) = term_a_list[index+1]
+    if tag1 == 'TERM':
+        (tag2, item2) = term_a_list[index+2]
+        if tag2 == 'AE':
+            term_a_list[index] = ('SS', None)
+            term_a_list[index+2] = ('SE', None)
+
+address_op_dict = {'adr': None,
+                   'adrl': None,
+                   'adrp': None,
+                   'ldr': None,
+                   'ldrsw': None,
+                   'prfm': None}
+
+def fix_symbol_term(op, term_a_list):
+    global address_op_dict
+    if op in address_op_dict:
+        (tag, item) = term_a_list[2]
+        if tag == 'REG':
+            term_a_list[2] = ('TERM', item)
+
+def split_use_and_def(target_config, op, term_a_list):
+    use_a_list = []
+    def_a_list = []
+    if target_config.load_op_p(op):
+        (first_a_list, second_a_list) = cut_load_term(term_a_list)
+        use_a_list = second_a_list
+        def_a_list = first_a_list
+        base = get_pre_or_post_index_reg(term_a_list)
+        if base:
+            def_a_list.append(base)
+    elif target_config.store_op_p(op):
+        use_a_list = term_a_list.copy()
+        base = get_pre_or_post_index_reg(term_a_list)
+        if base:
+            def_a_list.append(base)
+    elif overwrite_op_p(op):
+        (first_a_list, second_a_list) = cut_first_term(term_a_list)
+        use_a_list = term_a_list.copy()
+        def_a_list = first_a_list
+    elif only_use_op_p(op):
+        use_a_list = term_a_list.copy()
+    else:
+        (first_a_list, second_a_list) = cut_first_term(term_a_list)
+        use_a_list = second_a_list
+        def_a_list = first_a_list
+    return (use_a_list, def_a_list)
+
+def get_pre_or_post_index_reg(term_a_list):
+    address_mode = 0
+    base = None
+    for term in term_a_list:
+        (tag, item) = term
+        if tag == 'AS':
+            address_mode = 1
+        elif tag == 'AE':
+            address_mode = 2
+        elif tag == 'AE!':
+            if base == None:
+                driver.internal_error('get_pre_or_post_index_reg 1')
+            return base
+        elif address_mode == 1:
+            if tag == 'REG':
+                base = (tag, item)
+                address_mode = 3
+            else:
+                driver.internal_error('get_pre_or_post_index_reg 2')
+        elif address_mode == 2:
+            if tag == 'TERM':
+                return base
+        else:
+            pass
+    return None
+
+def cut_first_term(term_a_list):
+    first_p = True
+    first_a_list = []
+    second_a_list = []
+    for term in term_a_list:
+        (tag, item) = term
+        if tag == 'C':
+            first_p = False
+        elif first_p:
+            first_a_list.append(term)
+        else:
+            second_a_list.append(term)
+    return (first_a_list, second_a_list)
+
+def cut_load_term(term_a_list):
+    first_p = True
+    first_a_list = []
+    second_a_list = []
+    for term in term_a_list:
+        (tag, item) = term
+        if tag == 'AS':
+            first_p = False
+            second_a_list.append(term)
+        elif first_p:
+            first_a_list.append(term)
+        else:
+            second_a_list.append(term)
+    return (first_a_list, second_a_list)
+
+# TODO: ???
+# register overlap (x3, w3)
+# partial register usage
+# hidden registers (status registers)
+def get_register_id_list(term_a_list):
+    id_list = []
+    for term in term_a_list:
+        (tag, item) = term
+        if tag == 'REG':
+            id = get_register_id(item)
+            if id:
+                id_list.append(id)
+    index = 0
+    for term in term_a_list:
+        (tag, item) = term
+        if tag == 'BAR':
+            add_id_list = get_register_id_list_sub(term_a_list, index)
+            for id in add_id_list:
+                id_list.append(id)
+        index += 1
+    return id_list
+
+def get_register_id_list_sub(term_a_list, index):
+    add_id_list = []
+    (tag1, item1) = term_a_list[index-1]
+    (tag2, item2) = term_a_list[index+1]
+    if tag1 == 'REG' and tag2 == 'REG':
+        id1 = get_register_id(item1)
+        nid1 = int(id1)
+        id2 = get_register_id(item2)
+        nid2 = int(id2)
+        tmp = nid1 + 1
+        while tmp < nid2:
+            add_id_list.append(str(tmp))
+            tmp += 1
+    return add_id_list
+
+def get_register_id(item):
+    v_pattern = re.compile('b\d+|h\d+|s\d+|d\d+|q\d+')
+    v2_pattern = re.compile('v\d+')
+    r_pattern = re.compile('r\d+|x\d+|w\d+')
+    if item in ['xzr', 'wzr']:
+        return None
+    if item in ['sp', 'wsp']:
+        return 'sp'
+    m = v_pattern.match(item, 0)
+    if m:
+        r = m.group()
+        id = int(r[1:]) + 3000
+        return str(id)
+    m = v2_pattern.match(item, 0)
+    if m:
+        r = m.group()
+        id = int(r[1:]) + 3000
+        return str(id)
+    m = r_pattern.match(item, 0)
+    if m:
+        r = m.group()
+        id = int(r[1:]) + 2000
+        return str(id)
+    driver.internal_error('get_register_id: ' + item)
+
+overwrite_op_dict = {'movk': None,
+                     'fmla': None,
+                     'mla': None,
+                     'saba': None,
+                     'sabal': None,
+                     'sabal2': None,
+                     'sabd': None,
+                     'sabdl': None,
+                     'sabdl2': None,
+                     'sadalp': None,
+                     'smlal': None,
+                     'smlal2': None,
+                     'sqdmlal': None,
+                     'sqdmlal2': None,
+                     'sqrdmlah': None,
+                     'srshr': None,
+                     'srsra': None,
+                     'sshr': None,
+                     'ssra': None,
+                     'suqadd': None,
+                     'uaba': None,
+                     'uabal': None,
+                     'uabal2': None,
+                     'uabd': None,
+                     'uabdl': None,
+                     'uabdl2': None,
+                     'uadalp': None,
+                     'umlal': None,
+                     'umlal2': None,
+                     'urshr': None,
+                     'ursra': None,
+                     'ushr': None,
+                     'usqadd': None,
+                     'usra': None}
+    
+def overwrite_op_p(op):
+    global overwrite_op_dict
+    return op in overwrite_op_dict
 
 def only_use_op_p(op):
-    if op in ['cmp', 'nop']:
-        return True
-    return False
-
-def label_reference_op_p(op):
-    if op in ['adr', 'adrp']:
+    if op in ['prfm', 'cmp', 'nop']:
         return True
     return False
 
 def uc_op_p(op):
-    if op in ['prfm', 'msr', 'mrs']:
+    if op in ['msr', 'mrs']:
         return True
     return False
 
+write_flags_op_dict = {'adds': None,
+                       'subs': None,
+                       'cmp': None,
+                       'cmn': None,
+                       'ands': None,
+                       'tst': None,
+                       'negs': None,
+                       'adcs': None,
+                       'sbcs': None,
+                       'ngcs': None,
+                       'bics': None,
+                       'ccmn': None,
+                       'ccmp': None,
+                       'fcmp': None,
+                       'fcmpe': None,
+                       'fccmp': None,
+                       'fccmpe': None}
 
 def write_flags_op(op):
-    if op in ['adds', 'subs', 'cmp', 'cmn', 'ands', 'tst', 'negs', 'adcs', 'sbcs', 'ngcs', 'bics', 'ccmn', 'ccmp']:
-        return True
-    if op in ['fcmp', 'fcmpe', 'fccmp', 'fccmpe']:
-        return True
-    return False
+    global write_flags_op_dict
+    return op in write_flags_op_dict
+
+read_flags_op_dict = {'addc': None,
+                      'sbc': None,
+                      'ngc': None,
+                      'csel': None,
+                      'csinc': None,
+                      'csinv': None,
+                      'csneg': None,
+                      'cset': None,
+                      'csetm': None,
+                      'cinc': None,
+                      'cinv': None,
+                      'cneg': None,
+                      'ccmn': None,
+                      'ccmp': None,
+                      'fcsel': None}
 
 def read_flags_op(op):
-    if op in ['addc', 'sbc', 'ngc, ', 'csel', 'csinc', 'csinv', 'csneg', 'cset', 'csetm', 'cinc', 'cinv', 'cneg',  'ccmn', 'ccmp']:
-        return True
-    if op in ['fcsel']:
-        return True
-    return False
-
-def form_group_p(form_list, assoc_list):
-    for form in form_list:
-        if form_p(form, assoc_list):
-            return True
-    return False
-
-def form_p(form, assoc_list):
-    index = 0
-    size = len(form)
-    if size != len(assoc_list):
-        return False
-    while index < size:
-        f = form[index]
-        (tag, content) = assoc_list[index]
-        index += 1
-        if f == 'R':
-            if tag != 'R':
-                return False
-            if content == 'NZCV' or content == 'FPSR':
-                driver.internal_error('form_p:' + content)
-            continue
-        elif f == 'A':
-            if not tag in ['AE']:
-                return False
-            continue
-        elif f == '!':
-            if not tag in ['AE!']:
-                return False
-            continue
-        elif f == 'B':
-            if not tag in ['B']:
-                return False
-            continue
-        elif f == 'S':
-            if not tag in ['SYM', 'R']:
-                return False
-            continue
-        elif f == 'I':
-            if tag != 'IMM':
-                return False
-            continue
-        else:
-            driver.internal_error('form_p')
-    return True
-
-def extract_items(assoc_list):
-    a_head = None
-    item_list = []
-    for (tag, item) in assoc_list:
-        if tag == 'R':
-            item_list.append(item)
-            continue
-        elif tag == 'AE!' or tag == 'AE':
-            for (tag2, item2) in item:
-                if a_head == None:
-                    if tag2 != 'R':
-                        driver.internal_error('extract_items 1')
-                    a_head = item2
-                if tag2 == 'R':
-                    item_list.append(item2)
-            continue
-        elif tag == 'B':
-            for (tag2, item2) in item:
-                if tag2 == 'R':
-                    item_list.append(item2)
-            continue
-        elif tag == 'IMM' or tag == 'SYM':
-            continue
-        else:
-            driver.internal_error('extract_items 2')
-    return (a_head, item_list)
-
-def check_1(line, tmp_list):
-    if 0 < len(tmp_list):
-        return
-    driver.internal_error('check_1')
-
-# TODO: ???
-# register overlap (x3, w3)
-# hidden registers (status registers)
-def get_use_and_def_items(target_config, line, op):
-    use_items = []
-    def_items = []
-    arg_part = get_arg_part(line, op)
-    assoc_list = parse_arg_part(arg_part)
-    if uc_op_p(op):
-        driver.internal_error('get_use_and_def_items: 0')
-    if target_config.load_op_p(op):
-        (a_head, item_list) = extract_items(assoc_list)
-        if form_group_p(['R!', 'RAI'], assoc_list):
-            def_items.append(item_list[0])
-            def_items.append(a_head)
-            for x in item_list[1:]:
-                add_item(use_items, x)
-        elif form_group_p(['RR!', 'RRAI'], assoc_list):
-            def_items.append(item_list[0])
-            def_items.append(item_list[1])
-            def_items.append(a_head)
-            for x in item_list[2:]:
-                add_item(use_items, x)
-        elif form_group_p(['RA'], assoc_list):
-            def_items.append(item_list[0])
-            for x in item_list[1:]:
-                add_item(use_items, x)
-        elif form_group_p(['RRA'], assoc_list):
-            def_items.append(item_list[0])
-            def_items.append(item_list[1])
-            for x in item_list[2:]:
-                add_item(use_items, x)
-        elif form_group_p(['BA'], assoc_list):
-            pass
-        else:
-            driver.internal_error('get_use_and_def_items: 1')
-        use_items.append('MEM')
-    elif target_config.store_op_p(op):
-        (a_head, item_list) = extract_items(assoc_list)
-        if form_group_p(['R!', 'RAI'], assoc_list):
-            def_items.append(a_head)
-        elif form_group_p(['RR!', 'RRAI'], assoc_list):
-            def_items.append(a_head)
-        elif form_group_p(['RA'], assoc_list):
-            pass
-        elif form_group_p(['RRA'], assoc_list):
-            pass
-        elif form_group_p(['BA'], assoc_list):
-            pass
-        else:
-            driver.internal_error('get_use_and_def_items: 2')
-        for x in item_list:
-            add_item(use_items, x)
-        def_items.append('MEM')
-    elif label_reference_op_p(op):
-        (a_head, item_list) = extract_items(assoc_list)
-        if form_group_p(['RS', 'RI'], assoc_list):
-            def_items.append(item_list[0])
-        elif form_group_p(['RR'], assoc_list):
-            # RR --> RS
-            def_items.append(item_list[0])
-        else:
-            driver.internal_error('get_use_and_def_items: 3')
-    elif overwrite_op_p(op):
-        (a_head, item_list) = extract_items(assoc_list)
-        check_1(line, item_list)
-        def_items.append(item_list[0])
-        for x in item_list:
-            add_item(use_items, x)
-    elif only_use_op_p(op):
-        (a_head, item_list) = extract_items(assoc_list)
-        for x in item_list:
-            add_item(use_items, x)
-        if read_flags_op(op):
-            use_items.append('NZCV')
-        if write_flags_op(op):
-            def_items.append('NZCV')
-    else:
-        (a_head, item_list) = extract_items(assoc_list)
-        check_1(line, item_list)
-        def_items.append(item_list[0])
-        for x in item_list[1:]:
-            add_item(use_items, x)
-        if read_flags_op(op):
-            use_items.append('NZCV')
-        if write_flags_op(op):
-            def_items.append('NZCV')
-    return (use_items, def_items)
+    global read_flags_op_dict
+    return op in read_flags_op_dict
 
 def get_execution_trace(execution_trace_map, item):
     if item in execution_trace_map:
@@ -435,8 +455,6 @@ def r_to_r_id(items):
     return fix_items
 
 def add_dependence(dg, execution_trace_map, index, use_items, def_items):
-    use_items = r_to_r_id(use_items)
-    def_items = r_to_r_id(def_items)
     for item in use_items:
         trace_list = get_execution_trace(execution_trace_map, item)
         for (tag, p_index) in trace_list:
