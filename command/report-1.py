@@ -52,7 +52,7 @@ def report_c1_t1_mx_sub(root_dir, config_name, test_name, metric_name):
             data.insert(0, bb)
             result_table.append(data)
         else:
-            result_table[index].extend(data[1:])
+            result_table[index].extend(data[2:])
         index += 1
     first_p = False
 
