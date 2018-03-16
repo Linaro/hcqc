@@ -1,38 +1,19 @@
 ## Running samples
 
-Please fix both `COMPILER' and `VERSION' fields in hcqc/config/gcc-config.json and hcqc/config/clang-config.json to suit your environment on AArch64.
+Please fix `COMPILER', `COMMAND' and `VERSION' fields in hcqc/config/gcc-config.json to suit your environment on AArch64.
 
 The following commands:
 
     % cd hcqc
-    % ./run-sample.sh
+    % ./run-sample.sh gcc-config
 
-generate the following results:
+generate the following results for `hcqc/test-program/sample/kernel.c'.
 
     hcqc/report/sample/gcc-config--sample--all.csv
     hcqc/report/sample/gcc-config--sample--kind.csv
     hcqc/report/sample/gcc-config--sample--op.csv
     hcqc/report/sample/gcc-config--sample--regalloc.csv
-
-The following commands:
-
-    % cd hcqc
-    % ./run-real.sh
-
-generate the following results:
-
-    hcqc/report/HimenoBMT-static/clang-config--HimenoBMT-static--kind.csv
-    hcqc/report/HimenoBMT-static/clang-config--HimenoBMT-static--op.csv
-    hcqc/report/HimenoBMT-static/clang-config--HimenoBMT-static--regalloc.csv
-    hcqc/report/HimenoBMT-static/gcc-config--HimenoBMT-static--kind.csv
-    hcqc/report/HimenoBMT-static/gcc-config--HimenoBMT-static--op.csv
-    hcqc/report/HimenoBMT-static/gcc-config--HimenoBMT-static--regalloc.csv
-    hcqc/report/hpcg-3.0/clang-config--hpcg-3.0--kind.csv
-    hcqc/report/hpcg-3.0/clang-config--hpcg-3.0--op.csv
-    hcqc/report/hpcg-3.0/clang-config--hpcg-3.0--regalloc.csv
-    hcqc/report/hpcg-3.0/gcc-config--hpcg-3.0--kind.csv
-    hcqc/report/hpcg-3.0/gcc-config--hpcg-3.0--op.csv
-    hcqc/report/hpcg-3.0/gcc-config--hpcg-3.0--regalloc.csv
+    hcqc/report/sample/gcc-config.png
 
 The following commands:
 

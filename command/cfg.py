@@ -298,7 +298,7 @@ def dump_tree(bb_list, tree):
         index = mmm[bb]
         line_number = bb.start_line_number
         label = bb.label
-        size = bb.get_depth()
+        size = bb.get_size()
         depth = bb.depth
         if not label:
             label = ''

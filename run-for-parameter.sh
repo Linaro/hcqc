@@ -1,15 +1,16 @@
 #!/bin/sh
 
-METRIC_LIST="op kind regalloc"
-
-TP_LIST="HimenoBMT-static hpcg-3.0"
-
-CONFIG_LIST="clang-config gcc-config"
-
 #HCQC_OPTIONS="--v"
-#HCQC_REPORT_OPTIONS="--v"
 HCQC_OPTIONS=
+#HCQC_REPORT_OPTIONS="--v"
 HCQC_REPORT_OPTIONS=
+
+case $# in
+1) ;;
+*) echo 'usage: run-for-parameter.sh parameter-file' 1>&2; exit 2;;
+esac
+
+. ./$1
 
 for tp in ${TP_LIST}
 do
