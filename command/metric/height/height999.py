@@ -532,7 +532,9 @@ def get_dependence_height(target_config, bb):
 
 class HeightMetricWorker(driver.MetricWorker):
     def match_p(self, target_config, test_name):
-        return True
+        if target_config.arch == "aarch64":
+            return True
+        return False
 
     def set_up_before_getting_data(self, target_config, bb_list):
         pass

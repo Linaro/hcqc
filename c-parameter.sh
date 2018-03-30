@@ -6,3 +6,15 @@ TP_LIST="HimenoBMT-dynamic HimenoBMT-static ccs-qcd-bicgstab_hmc ccs-qcd-clover 
 
 COMPARE_A="clang-cavium gcc-cavium"
 COMPARE_B="clang-cavium-fast gcc-cavium-fast"
+
+if [ ! -r "./lib/aarch64/libHCQC.a" ]
+then
+    cd ./lib/aarch64
+    make
+    if [ $? -ne 0 ]
+    then
+	echo "cannot build ./lib/aarch64/libHCQC.a"
+	exit 2
+    fi
+    cd ../..
+fi
