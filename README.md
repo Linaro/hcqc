@@ -387,7 +387,8 @@ It corresponds to the first and second column parts of the CSV file of the resul
     *SUMMARY*,32,-,
 
 Here, the column of `CFG` represents the control flow graph and each row of the `CFG` column corresponds to each basic block of the control flow graph.
-The column of `SIZE` represents the number of instruction in each basic block and The column of `DEPTH` represents the depth of nesting of the loop (0 outside the loop).
+The column of `SIZE` represents the number of instruction in each basic block and the column of `DEPTH` represents the depth of nesting of the loop.
+A value of depth 0 means that the basic block is outside loops and a value of depth 999 means that the basic block does not reach the exit of the function by entering an infinite loop.
 Here, `cond` means that the basic block ends with a conditional branch instruction having a fallthrough, and `goto` means that the basic block ends with an unconditional branch instruction.
 Also, `end` means the end of the function.
 
@@ -1005,10 +1006,6 @@ For example, you can generate a control flow graph for the assembly code as foll
 
     % cd ${INSTALL_DIRECTORY}/hcqc/command
     % python3 test-cfg.py aarch64 ClangLLVM 4.0.1 /tmp/AsmByClangLLVM.s kernel_f
-
-## Known Bugs
-
-Currently, HCQC cannot handle infinite loops.
 
 ## Future Work
 

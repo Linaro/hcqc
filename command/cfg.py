@@ -148,8 +148,12 @@ def reachable_p(reachable_map, previous_bb_list):
     return False
 
 def make_reachable_map(bb_list):
-    reachable_map = {}
     previous_map = make_previous_map(bb_list)
+    reachable_map = make_reachable_map_core(bb_list, previous_map)
+    return reachable_map
+
+def make_reachable_map_core(bb_list, previous_map):
+    reachable_map = {}
     for bb in bb_list:
         reachable_map[bb] = False
     reachable_map[bb_list[0]] = True
@@ -276,6 +280,7 @@ def find_depth_main(bb_list, previous_map, next_map):
     for bb in bb_list:
         if bb in next_map[bb]:
             bb.depth += 1
+    fix_infinite_loops(bb_list, previous_map, next_map)
 
 def make_back_edge_list(bb_list, previous_map, next_map):
     dominator_tree = graph.make_dominator_tree(bb_list, previous_map, next_map)
@@ -338,6 +343,35 @@ def construct_natural_loop_sub(bb_list, previous_map, src, dest):
                 loop_set.insert(0, p)
                 stack.insert(0, p)
     return loop_set
+
+def fix_infinite_loops(bb_list, previous_map, next_map):
+    reachable_map = make_reachable_map_core(bb_list, previous_map)
+    end_reachable_map = make_end_reachable_map(bb_list, next_map)
+    for bb in bb_list:
+        if reachable_map[bb] and not end_reachable_map[bb]:
+            bb.depth = 999
+
+def end_reachable_p(end_reachable_map, next_bb_list):
+    for bb in next_bb_list:
+        if end_reachable_map[bb]:
+            return True
+    return False
+
+def make_end_reachable_map(bb_list, next_map):
+    end_reachable_map = {}
+    for bb in bb_list:
+        if len(next_map[bb]) == 0:
+            end_reachable_map[bb] =True
+        else:
+            end_reachable_map[bb] = False
+    changed_p = True
+    while changed_p:
+        changed_p = False
+        for bb in bb_list:
+            if end_reachable_map[bb] == False and end_reachable_p(end_reachable_map, next_map[bb]):
+                end_reachable_map[bb] = True
+                changed_p = True
+    return end_reachable_map
 
 def build_table_branch_map(target_config, fin):
     table_branch_map = {}
