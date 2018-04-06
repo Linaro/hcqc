@@ -1,6 +1,6 @@
 CONFIG_LIST="clang++-cavium clang++-cavium-fast g++-cavium g++-cavium-fast"
 
-METRIC_LIST="op kind regalloc height"
+METRIC_LIST="op kind regalloc height vectorize"
 
 TP_LIST="LAMMPS-BO"
 
