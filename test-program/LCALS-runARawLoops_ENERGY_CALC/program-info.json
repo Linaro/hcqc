@@ -1,0 +1,12 @@
+{
+    "LANGUAGE" : "C++",
+    "MAIN_FLAGS" : ["?DEBUG_FLAG"],
+    "KERNEL_FLAGS" : [],
+    "LINK_FLAGS" : [],
+    "LIB_LIST" : [],
+    "MAIN_FILENAME" : "main.cxx",
+    "KERNEL_FILENAME" : "LCALS-runARawLoops_ENERGY_CALC.cxx",
+    "KERNEL_FUNCTION_NAME" : "_Z24runARawLoops_ENERGY_CALCiddddPdS_S_S_S_S_S_S_S_S_S_S_S_S_S_",
+    "INPUT" : [ "NONE", "NONE" ],
+    "OUTPUT" : [ "NONE", "NONE" ]
+}

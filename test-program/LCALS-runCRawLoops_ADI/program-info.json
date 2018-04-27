@@ -1,0 +1,12 @@
+{
+    "LANGUAGE" : "C++",
+    "MAIN_FLAGS" : ["?DEBUG_FLAG"],
+    "KERNEL_FLAGS" : [],
+    "LINK_FLAGS" : [],
+    "LIB_LIST" : [],
+    "MAIN_FILENAME" : "main.cxx",
+    "KERNEL_FILENAME" : "LCALS-runCRawLoops_ADI.cxx",
+    "KERNEL_FUNCTION_NAME" : "_Z16runCRawLoops_ADIiPdS_S_PPS_S1_S1_dddddddddd",
+    "INPUT" : [ "NONE", "NONE" ],
+    "OUTPUT" : [ "NONE", "NONE" ]
+}

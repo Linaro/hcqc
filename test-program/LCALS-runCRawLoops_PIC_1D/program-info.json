@@ -1,0 +1,12 @@
+{
+    "LANGUAGE" : "C++",
+    "MAIN_FLAGS" : ["?DEBUG_FLAG"],
+    "KERNEL_FLAGS" : [],
+    "LINK_FLAGS" : [],
+    "LIB_LIST" : [],
+    "MAIN_FILENAME" : "main.cxx",
+    "KERNEL_FILENAME" : "LCALS-runCRawLoops_PIC_1D.cxx",
+    "KERNEL_FUNCTION_NAME" : "_Z19runCRawLoops_PIC_1DiPdS_S_S_S_S_S_S_S_dPiS0_S0_",
+    "INPUT" : [ "NONE", "NONE" ],
+    "OUTPUT" : [ "NONE", "NONE" ]
+}

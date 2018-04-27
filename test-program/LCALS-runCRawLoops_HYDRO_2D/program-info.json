@@ -1,0 +1,12 @@
+{
+    "LANGUAGE" : "C++",
+    "MAIN_FLAGS" : ["?DEBUG_FLAG"],
+    "KERNEL_FLAGS" : [],
+    "LINK_FLAGS" : [],
+    "LIB_LIST" : [],
+    "MAIN_FILENAME" : "main.cxx",
+    "KERNEL_FILENAME" : "LCALS-runCRawLoops_HYDRO_2D.cxx",
+    "KERNEL_FUNCTION_NAME" : "_Z21runCRawLoops_HYDRO_2DiPPdS0_S0_S0_S0_S0_S0_S0_S0_S0_S0_",
+    "INPUT" : [ "NONE", "NONE" ],
+    "OUTPUT" : [ "NONE", "NONE" ]
+}

@@ -1,0 +1,12 @@
+{
+    "LANGUAGE" : "C++",
+    "MAIN_FLAGS" : ["?DEBUG_FLAG"],
+    "KERNEL_FLAGS" : [],
+    "LINK_FLAGS" : [],
+    "LIB_LIST" : [],
+    "MAIN_FILENAME" : "main.cxx",
+    "KERNEL_FILENAME" : "LCALS-runARawLoops_DEL_DOT_VEC_2D.cxx",
+    "KERNEL_FUNCTION_NAME" : "_Z27runARawLoops_DEL_DOT_VEC_2D10LoopLengthPdS0_S0_S0_S0_S0_S0_S0_S0_S0_S0_S0_S0_S0_S0_S0_S0_",
+    "INPUT" : [ "NONE", "NONE" ],
+    "OUTPUT" : [ "NONE", "NONE" ]
+}
