@@ -503,6 +503,7 @@ The metric program in HCQC is a set of programs to investigate the quality of co
 |AArch64 | Clang/LLVM | Y | Y | Y | Y | N | N | N |
 |x86_64 | GCC | Y | N | N | N | N | N | N |
 |x86_64 | Clang/LLVM | Y | N | Y | N | N | N | N |
+|x86_64 | ICC | Y | N | N | N | N | N | N |
 
 ### `op`
 

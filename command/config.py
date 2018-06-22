@@ -543,3 +543,73 @@ class C_x86_64__GCC(C_x86_64__):
             label = m.groups()
             return label[0]
         return None
+
+class C_x86_64__ICC(C_x86_64__):
+    def op(self, line):
+        m = re.match('^        (?P<MNEMONIC>\w[\.\w\d]*)($|( +.*))', line)
+        if m:
+            return m.group('MNEMONIC')
+        else:
+            return None
+    
+    def bb_label(self, line):
+        global verbose_p
+        m = re.match('^(\.?\.?\w[^:]*):', line)
+        if m:
+            label = m.groups()
+            if verbose_p:
+                print('label: [' + label[0] + ']')
+            return label[0]
+        else:
+            return None
+
+    def bb_branch(self, line):
+        branch_op = self.op(line)
+        if not self.control_transfer_op_p(branch_op):
+            return None
+        if branch_op in ['retq', 'ret']:
+            return (branch_op, None)
+        m = re.match('^        (jmp) +([_\w\d\.]+).*', line)
+        if m:
+            tmp = m.groups()
+            # tail calls
+            return tmp
+        m = re.match('^        (j[\w]*) +(\.?\.?[_\w\d\.]+).*', line)
+        if m:
+            tmp = m.groups()
+            return tmp
+        m = re.match('^        (jmpq) +(\*[^\s]+).*', line)
+        if m:
+            tmp = m.groups()
+            return tmp
+        m = re.match('^        (jmp) +(\*[^\s]+).*', line)
+        if m:
+            tmp = m.groups()
+            return tmp
+        return None
+    
+    def function_exit_p(self, name, line):
+        return re.match('^\t\.cfi_endproc', line)
+
+    def get_table_branch_prologue_number(self):
+        # .2.3_2.switchtab.0:
+	# --> .quad	..1.1_0.TAG.0.0.1
+        return 1
+
+    def trace_table_branch_prologue(self, region_status, line):
+        if region_status == 0:
+            m = re.match('^(?P<TBLABEL>[^s]+switchtab[^:]+):$', line)
+            if m:
+                tb_label = m.group('TBLABEL')
+                return (True, tb_label)
+            else:
+                return (False, None)
+        else:
+            return (False, None)
+        
+    def get_table_branch_content(self, line):
+        m = re.match('^\t\.quad\t(.*)$', line)
+        if m:
+            label = m.groups()
+            return label[0]
+        return None

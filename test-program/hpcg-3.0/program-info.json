@@ -1,7 +1,7 @@
 {
     "LANGUAGE" : "C",
-    "MAIN_FLAGS" : ["?DEBUG_FLAG"],
-    "KERNEL_FLAGS" : [],
+    "MAIN_FLAGS" : ["?DEBUG_FLAG", "?C99_STANDARD"],
+    "KERNEL_FLAGS" : ["?C99_STANDARD"],
     "LINK_FLAGS" : [],
     "LIB_LIST" : [],
     "MAIN_FILENAME" : "main.c",

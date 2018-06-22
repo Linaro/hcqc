@@ -1,0 +1,12 @@
+{
+    "DISTRIBUTION" : "CentOS Linux release 7.5.1804 (Core)",
+    "ARCH" : "x86_64",
+    "CPU" : "Skylake",
+    "LANGUAGE" : "C++",
+    "COMPILER" : "ICC",
+    "COMMAND" : "/opt/intel/compilers_and_libraries_2018.2.199/linux/bin/intel64/icpc",
+    "VERSION" : "18.0.2",
+    "OPT_FLAGS" : ["-O2"],
+    "ASM_FLAGS" : ["-S", "-fverbose-asm"],
+    "FLAG_DB" : [["?DEBUG_FLAG", "-g"]]
+}

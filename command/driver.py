@@ -468,6 +468,7 @@ def check_compiler_version(command, version):
         config_error("version mismatch: `" + version + "' in config : `" + lines[0] + "' by " + command)
 
 def cfg_work(target_config, asm_filename, function_name):
+    sys.setrecursionlimit(10000)
     bb_list = cfg.get_bb_list(target_config, asm_filename, function_name)
     column_list = cfg.dump_column(bb_list)
     cfg_filename = asm_filename + '.dot'
