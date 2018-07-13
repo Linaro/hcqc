@@ -557,6 +557,9 @@ class C_x86_64__ICC(C_x86_64__):
         m = re.match('^(\.?\.?\w[^:]*):', line)
         if m:
             label = m.groups()
+            m = re.match('\.\.___tag_value__.*', label[0])
+            if m:
+                return None
             if verbose_p:
                 print('label: [' + label[0] + ']')
             return label[0]
@@ -587,6 +590,12 @@ class C_x86_64__ICC(C_x86_64__):
             tmp = m.groups()
             return tmp
         return None
+
+    def tail_call_p(self, branch_op, branch_target):
+        if branch_op == 'jmp' and branch_target and re.match('\.?\.?[_\w\d\.]+[_\w]', branch_target):
+            return True
+        else:
+            return False
     
     def function_exit_p(self, name, line):
         return re.match('^\t\.cfi_endproc', line)
