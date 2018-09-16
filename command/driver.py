@@ -11,6 +11,7 @@ import cfg
 uname_command = '/bin/uname'
 diff_command = '/usr/bin/diff'
 mv_command = '/bin/mv'
+perf_command = '/usr/bin/perf'
 verbose_p = False
 
 def internal_error(message):
@@ -78,7 +79,8 @@ def make_executable(command, flag_list, filename_list, exec_filename, lib_list):
         command_error('link: ' + exec_filename)
 
 def run_executable(exec_filename, src_dir, in_type, in_filename, work_dir, out_type, out_filename, check_data_filename):
-    command_line_list = [exec_filename]
+    perf_out_filename = work_dir + 'perf.out'
+    command_line_list = [perf_command, 'stat', '-e', 'cache-misses', '-o', perf_out_filename, exec_filename]
     if in_type == "NONE":
         pass
     elif in_type == "STDIN":
